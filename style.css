@@ -1,0 +1,79 @@
+html { scroll-behavior: smooth; } /* 平滑滾動 */
+body { font-family: Arial, sans-serif; margin:0; padding-top:130px; background:#fffaf0; }
+
+.header{
+  position: fixed; top:0; width:100%; background: linear-gradient(90deg,#FFD27F,#FFC966);
+  display:flex; flex-direction:column; align-items:center; padding:10px 30px; z-index:9999;
+}
+.header-top{ width:100%; display:flex; justify-content:center; position:relative; }
+.logo{ font-size:24px; font-weight:bold; text-align:center; }
+.cart-icon{ position:absolute; right:30px; top:50%; transform:translateY(-50%); cursor:pointer; z-index:10000; }
+
+.nav{ margin-top:10px; display:flex; gap:20px; justify-content:center; }
+.nav a{ color:white; text-decoration:none; font-weight:500; }
+.dropdown-content{ display:none; position:absolute; background:#FFF1D6; min-width:150px; box-shadow:0 4px 10px rgba(0,0,0,0.1); z-index:10; }
+.dropdown-content a{ display:block; color:#B35400; padding:10px; text-decoration:none; }
+.dropdown:hover .dropdown-content{ display:block; }
+
+/* Hero */
+.hero{ text-align:center; padding:100px 20px; background: linear-gradient(180deg,#FFE5B4,#FFF5CC); }
+
+/* 產品區 */
+.products{ padding:40px; text-align:center; }
+.product-grid{ display:flex; flex-wrap:wrap; gap:20px; justify-content:center; margin-bottom:40px; }
+.product{ background:white; padding:20px; width:220px; border-radius:10px; box-shadow:0 4px 10px rgba(0,0,0,0.1); transition:0.3s; }
+.product:hover{ transform:translateY(-8px); }
+button{ background: linear-gradient(90deg,#FFD27F,#FFC966); color:white; border:none; padding:10px 15px; cursor:pointer; border-radius:5px; }
+button:hover{ background: linear-gradient(90deg,#FFC966,#FFB347); }
+
+/* 購物車面板 */
+.cart-panel{ position: fixed; top:130px; right:-350px; width:300px; height:calc(100%-130px); background:#FFF5E0; box-shadow:-4px 0 10px rgba(0,0,0,0.2); padding:20px; transition:right 0.3s; z-index:10001; overflow:auto; }
+.cart-panel.open{ right:30px; }
+
+/* Toast */
+#toast{ position:fixed; bottom:30px; right:30px; background:#FFD27F; color:#5C3A00; padding:12px 20px; border-radius:8px; opacity:0; pointer-events:none; transition: opacity 0.3s, transform 0.3s; z-index:50; }
+
+/* 結帳 Modal */
+#checkout-modal{ display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.4); z-index:2000; justify-content:center; align-items:center; }
+#checkout-modal form{ background:#FFF5CC; padding:30px; border-radius:10px; width:90%; max-width:400px; text-align:left; }
+
+/* 品牌故事 */
+.about{ padding:50px 20px; text-align:center; background:#FFF5CC; }
+.about h2{ font-size:28px; margin-bottom:20px; }
+.about p{ font-size:18px; line-height:1.6; max-width:700px; margin:0 auto; }
+
+/* Footer */
+footer{ background: linear-gradient(90deg,#FFD27F,#FFC966); color:white; text-align:center; padding:20px; margin-top:40px; }
+
+/* 響應式 */
+@media(max-width:768px){ .product-grid{ flex-direction:column; align-items:center; } .header{ flex-direction:column; align-items:flex-start; } }
+
+.cart-item{
+display:flex;
+justify-content:space-between;
+align-items:center;
+margin-bottom:10px;
+border-bottom:1px solid #eee;
+padding-bottom:6px;
+}
+
+.qty-control{
+display:flex;
+align-items:center;
+gap:6px;
+}
+
+.qty-control button{
+padding:3px 8px;
+font-size:14px;
+}
+
+.cart-buttons{
+display:flex;
+gap:10px;
+margin-top:10px;
+}
+
+.cart-buttons button{
+flex:1;
+}
