@@ -1,14 +1,13 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Cherry&Eason Pet</title>
-<link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cherry&Eason Pet | 寵愛您的毛小孩</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<!-- Header -->
 <header class="header">
   <div class="header-top">
     <div class="logo">Cherry&Eason Pet</div>
@@ -17,144 +16,149 @@
   <nav class="nav">
     <a href="#hero">首頁</a>
     <div class="dropdown">
-      <a href="#">商品分類</a>
+      <a href="javascript:void(0)">商品分類</a>
       <div class="dropdown-content">
-        <a href="#cat-snacks">貓零食</a>
-        <a href="#dog-snacks">狗零食</a>
-        <a href="#cat-supplies">貓生活用品</a>
-        <a href="#dog-supplies">狗生活用品</a>
+        <a href="#recommended"><span>🔥</span> 熱門推薦</a>
+        <a href="#cat-snacks"><span>🐱</span> 貓貓零食</a>
+        <a href="#dog-snacks"><span>🐶</span> 狗狗零食</a>
+        <a href="#cat-supplies"><span>🐈</span> 貓貓用品</a>
+        <a href="#dog-supplies"><span>🐕</span> 狗狗用品</a>
       </div>
     </div>
     <a href="#about">品牌故事</a>
     <a href="#footer">聯絡我們</a>
   </nav>
+  <div class="search-bar">
+    <input type="text" id="product-search" placeholder="搜尋商品名稱...">
+  </div>
 </header>
 
-<!-- Hero 區 -->
 <section id="hero" class="hero">
-  <h1>歡迎來到 Cherry&Eason Pet</h1>
-  <p>給您的毛小孩最好的選擇！</p>
+  <div class="container">
+    <h1>歡迎來到 Cherry&Eason Pet</h1>
+    <p>給您的毛小孩最好的選擇！我們專挑健康、天然且讓毛孩瘋狂的優質產品。</p>
+  </div>
 </section>
 
-<!-- 商品區 -->
 <section class="products">
+  
+  <h2 id="recommended"><span>🔥</span> 熱門推薦</h2>
+  <div class="product-grid">
+    <div class="product">
+      <span class="badge">HOT</span>
+      <img src="https://via.placeholder.com/200x150.png?text=熱銷凍乾" alt="熱銷凍乾">
+      <h3>極品原肉凍乾</h3>
+      <p>NT$280</p>
+      <button onclick="addToCart('極品原肉凍乾', 280)">加入購物車</button>
+    </div>
+    <div class="product">
+      <span class="badge">HOT</span>
+      <img src="https://via.placeholder.com/200x150.png?text=舒壓貓草" alt="舒壓貓草">
+      <h3>有機舒壓貓草</h3>
+      <p>NT$120</p>
+      <button onclick="addToCart('有機舒壓貓草', 120)">加入購物車</button>
+    </div>
+  </div>
 
-  <!-- 推薦商品 -->
-  <h2>推薦商品</h2>
+  <h2 id="cat-snacks"><span>🐱</span> 貓貓零食</h2>
   <div class="product-grid">
     <div class="product">
       <img src="https://via.placeholder.com/200x150.png?text=貓零食A" alt="貓零食A">
       <h3>貓零食 A</h3>
       <p>NT$150</p>
-      <button onclick="addToCart('貓零食 A',150)">加入購物車</button>
+      <button onclick="addToCart('貓零食 A', 150)">加入購物車</button>
     </div>
+  </div>
+
+  <h2 id="dog-snacks"><span>🐶</span> 狗狗零食</h2>
+  <div class="product-grid">
     <div class="product">
       <img src="https://via.placeholder.com/200x150.png?text=狗零食B" alt="狗零食B">
       <h3>狗零食 B</h3>
       <p>NT$200</p>
-      <button onclick="addToCart('狗零食 B',200)">加入購物車</button>
+      <button onclick="addToCart('狗零食 B', 200)">加入購物車</button>
     </div>
   </div>
 
-  <!-- 分類商品 -->
-  <h2 id="cat-snacks">貓零食</h2>
+  <h2 id="cat-supplies"><span>🐈</span> 貓貓用品</h2>
   <div class="product-grid">
     <div class="product">
-      <img src="https://via.placeholder.com/200x150.png?text=貓零食C" alt="貓零食C">
-      <h3>貓零食 C</h3>
-      <p>NT$180</p>
-      <button onclick="addToCart('貓零食 C',180)">加入購物車</button>
-    </div>
-  </div>
-
-  <h2 id="dog-snacks">狗零食</h2>
-  <div class="product-grid">
-    <div class="product">
-      <img src="https://via.placeholder.com/200x150.png?text=狗零食D" alt="狗零食D">
-      <h3>狗零食 D</h3>
-      <p>NT$220</p>
-      <button onclick="addToCart('狗零食 D',220)">加入購物車</button>
-    </div>
-  </div>
-
-  <h2 id="cat-supplies">貓生活用品</h2>
-  <div class="product-grid">
-    <div class="product">
-      <img src="https://via.placeholder.com/200x150.png?text=貓生活用品E" alt="貓生活用品E">
+      <img src="https://via.placeholder.com/200x150.png?text=貓用品E" alt="貓用品E">
       <h3>貓生活用品 E</h3>
       <p>NT$300</p>
-      <button onclick="addToCart('貓生活用品 E',300)">加入購物車</button>
+      <button onclick="addToCart('貓生活用品 E', 300)">加入購物車</button>
     </div>
   </div>
 
-  <h2 id="dog-supplies">狗生活用品</h2>
+  <h2 id="dog-supplies"><span>🐕</span> 狗狗用品</h2>
   <div class="product-grid">
     <div class="product">
-      <img src="https://via.placeholder.com/200x150.png?text=狗生活用品F" alt="狗生活用品F">
+      <img src="https://via.placeholder.com/200x150.png?text=狗用品F" alt="狗用品F">
       <h3>狗生活用品 F</h3>
       <p>NT$250</p>
-      <button onclick="addToCart('狗生活用品 F',250)">加入購物車</button>
+      <button onclick="addToCart('狗生活用品 F', 250)">加入購物車</button>
     </div>
   </div>
-
 </section>
 
-<!-- 品牌故事 -->
 <section id="about" class="about">
-  <h2>品牌故事</h2>
-  <p>Cherry&Eason Pet 成立於 2026，致力於提供最安全、最健康的毛小孩零食與生活用品。我們希望每一位毛孩都能快樂、健康地成長！</p>
+  <div class="container">
+    <h2><span>📖</span> 品牌故事</h2>
+    <div class="about-content">
+      <p>Cherry & Eason Pet 成立於 2026 年。</p>
+      <p>因為家裡有我們最愛的狗狗（<strong>豆豆</strong>）和貓貓（<strong>圓圓</strong>），我們更能理解每一位毛孩在家中的重要，也深深知道毛孩不只是寵物，而是家人。</p>
+      <p>在為牠們挑選零食與生活用品時，我們總是格外謹慎，希望每一樣都是安心、值得信任，並且適合毛孩的好產品。因此在選品上，我們也會多一份用心與把關。</p>
+      <p>希望把我們願意給豆豆與圓圓嘗試與使用的好東西，也分享給每一位毛孩家庭，讓毛小孩都能健康、快樂地成長，陪伴彼此走過更多溫暖的小日子。</p>
+      <h3 class="brand-slogan">「因為毛孩是家人，所以每一份選擇都多一份用心」</h3>
+    </div>
+  </div>
 </section>
 
-<!-- 購物車面板 -->
 <div id="cart-panel" class="cart-panel">
-  <h3>購物車</h3>
+  <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #FFD27F; padding-bottom: 10px;">
+    <h3 style="margin:0;">購物車</h3>
+    <span onclick="toggleCart()" style="cursor:pointer; font-size:28px;">&times;</span>
+  </div>
   <div id="cart-items"></div>
-  <p id="cart-total">總金額 NT$0</p>
-<div class="cart-buttons">
-<button onclick="clearCart()">清空購物車</button>
-<button onclick="checkout()">結帳</button>
-</div>
-</div>
-
-<!-- Toast 提示泡泡 -->
-<div id="toast"></div>
-
-<!-- 結帳 Modal -->
-<div id="checkout-modal">
-  <div>
-    <h3>結帳資訊</h3>
-    <form id="checkout-form">
-      <label>姓名</label><input type="text" id="name" required>
-      <label>電話</label><input type="text" id="phone" required>
-      <label>Email</label><input type="email" id="email" required>
-      <label>收件地址</label><input type="text" id="address" required>
-      <label>備註</label><textarea id="note"></textarea>
-      <button type="submit">送出訂單</button>
-      <button type="button" onclick="closeModal()">取消</button>
-    </form>
+  <p id="cart-total" style="font-weight: bold; margin-top: 20px;">總金額 NT$0</p>
+  <div class="cart-buttons" style="display: flex; gap: 10px;">
+    <button onclick="clearCart()" style="flex: 1; background: #eee; color: #333;">清空</button>
+    <button onclick="checkout()" style="flex: 2;">前往結帳</button>
   </div>
 </div>
 
-<!-- 聯絡我們 -->
+<div id="toast"></div>
+
+<div id="checkout-modal">
+  <form id="checkout-form">
+    <h3>結帳資訊</h3>
+    <label>姓名</label><input type="text" id="name" required placeholder="收件人姓名">
+    <label>電話</label><input type="text" id="phone" required placeholder="聯絡電話">
+    <label>Email</label><input type="email" id="email" required placeholder="您的 Email">
+    <label>地址</label><input type="text" id="address" required placeholder="收件地址">
+    <div style="display:flex; gap:10px; margin-top:10px;">
+        <button type="submit" id="submit-btn" style="flex:1;">確認送出訂單</button>
+        <button type="button" onclick="closeModal()" style="flex:1; background:#ccc;">取消</button>
+    </div>
+  </form>
+</div>
+
+<button id="backToTop" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">↑</button>
+
 <footer id="footer">
-<h3>聯絡我們</h3>
-
-<p>
-IG：
-<a href="#" target="_blank">
-點此前往
-</a>
-</p>
-
-<p>
-LINE：
-<a href="#" target="_blank">
-點此前往
-</a>
-</p>
-  <p>© 2026 Cherry&Eason Pet. All Rights Reserved.</p>
+  <h3>聯絡我們</h3>
+  <p>IG：<a href="#" target="_blank">點此前往</a></p>
+  <p>LINE：<a href="#" target="_blank">點此前往</a></p>
+  <p>© <span id="year"></span> Cherry&Eason Pet. All Rights Reserved.</p>
 </footer>
 
 <script src="cart.js"></script>
+<script>
+  document.getElementById('year').textContent = new Date().getFullYear();
+  window.onscroll = function() {
+    const btn = document.getElementById('backToTop');
+    btn.style.display = (document.documentElement.scrollTop > 300) ? "block" : "none";
+  };
+</script>
 </body>
 </html>
