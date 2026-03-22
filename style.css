@@ -1,7 +1,7 @@
 html { scroll-behavior: smooth; }
 body { font-family: 'Segoe UI', Arial, sans-serif; margin:0; padding-top:180px; background:#fffaf0; color: #5C3A00; }
 
-/* --- 錨點定位偏移 --- */
+/* --- 錨點定位偏移 (核心修正：避免被 fixed header 擋住) --- */
 #shop, #about-section, #footer-section {
     scroll-margin-top: 180px; 
 }
@@ -25,17 +25,9 @@ body { font-family: 'Segoe UI', Arial, sans-serif; margin:0; padding-top:180px; 
     content: "" !important; position: absolute !important; width: 0; height: 2px; 
     bottom: 0; left: 50%; background-color: #5C3A00; transition: all 0.3s ease !important; transform: translateX(-50%);
 }
-.nav a:hover::after, .nav a.active::after { width: 70%;}
+.nav a:hover::after { width: 70%;}
 
-/* 🟢 選中狀態樣式 */
-.nav a.active {
-    color: #FF4500 !important;
-}
-.nav a.active::after {
-    background-color: #FF4500 !important;
-}
-
-/* --- 下拉選單 --- */
+/* --- 下拉選單：緊貼優化區 --- */
 .dropdown { 
     display: inline-flex !important; 
     align-items: center !important; 
@@ -61,19 +53,25 @@ body { font-family: 'Segoe UI', Arial, sans-serif; margin:0; padding-top:180px; 
     border: 1px solid rgba(255, 210, 127, 0.3); 
 }
 
-.dropdown:hover .dropdown-content { display:flex !important; flex-direction: column !important; }
+.dropdown:hover .dropdown-content { 
+    display:flex !important; 
+    flex-direction: column !important; 
+}
 
 .dropdown-content a { 
     display:flex; align-items:center; gap:8px; color:#B35400; 
     padding:12px 20px !important; text-decoration:none; 
     transition: all 0.2s ease !important; border-bottom: 1px solid #fffaf0 !important;
-    white-space: nowrap; font-size: 15px !important;
+    white-space: nowrap;
+    font-size: 15px !important;
 }
 
 .dropdown-content a:last-child { border-bottom: none !important; }
 .dropdown-content a::after { display: none !important; }
-.dropdown-content a:hover, .dropdown-content a.active { 
+
+.dropdown-content a:hover { 
     background: #FFF5E6 !important; 
+    padding-left: 28px !important; 
     color: #FF4500 !important; 
 }
 
@@ -95,33 +93,30 @@ body { font-family: 'Segoe UI', Arial, sans-serif; margin:0; padding-top:180px; 
     url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40"><g fill-rule="evenodd"><g fill="%23FFD27F" fill-opacity="0.15"><path d="M0 38.59V16.41L11.09 5.32 22.18 16.41v22.18l-11.09 11.09L0 38.59zm22.18 0V16.41L33.27 5.32 44.36 16.41v22.18l-11.09 11.09L22.18 38.59zM0-1.41V16.41L11.09 5.32 22.18 16.41V-1.41L11.09-12.5 0-1.41zm22.18 0V16.41L33.27 5.32 44.36 16.41V-1.41L11.09-12.5 22.18-1.41zM33.27 27.5V5.32L44.36 16.41v22.18l-11.09 11.09L22.18 38.59V16.41L33.27 5.32zM11.09 27.5V5.32L22.18 16.41v22.18l-11.09 11.09L0 38.59V16.41L11.09 5.32z"/></g></g></svg>') !important; 
     background-repeat: repeat !important; 
 }
+.hero::before { content: "🐾" !important; position: absolute !important; font-size: 60px !important; opacity: 0.1 !important; color: #FFD27F !important; top: 30px; left: 50px; transform: rotate(-15deg); }
+.hero::after { content: "🐾" !important; position: absolute !important; font-size: 60px !important; opacity: 0.1 !important; color: #FFD27F !important; bottom: 30px; right: 50px; transform: rotate(15deg); }
+.hero h1 { font-size: 36px !important; font-weight: bold !important; color: #5C3A00 !important; margin-bottom: 25px !important; display: flex !important; align-items: center !important; justify-content: center !important; gap: 15px !important;}
+.hero h1::before, .hero h1::after { content: "🎁" !important; font-size: 28px !important; }
+.hero p { font-size: 19px !important; line-height: 2 !important; max-width: 650px !important; margin: 0 auto !important; color: #B35400 !important; background: rgba(255,255,255,0.3); padding: 10px; border-radius: 10px; }
 
-/* --- Products --- */
+/* --- Products Grid --- */
 .product-grid { display: flex; flex-wrap: wrap; gap: 20px; justify-content: center; margin-bottom: 50px; padding: 20px; }
 .product { background: white; padding: 20px; width: 220px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); position: relative; transition: 0.3s; }
 .product:hover { transform: translateY(-5px); }
 .product img { width: 100%; border-radius: 10px; margin-bottom: 10px; }
 
 button { background: linear-gradient(90deg,#FFD27F,#FFC966); color:#5C3A00; border:none; padding:10px 18px; cursor:pointer; border-radius:20px; font-weight:bold; }
+button:active { transform: scale(0.95); }
 
-/* 🗑️ 清空購物車按鈕樣式 */
-.clear-cart-btn {
-    background: none !important;
-    color: #999 !important;
-    border: 1px solid #ddd !important;
-    padding: 5px 10px !important;
-    font-size: 0.8rem !important;
-    border-radius: 5px !important;
-    cursor: pointer;
-    transition: all 0.2s;
-    margin-bottom: 10px;
-    display: inline-block;
-}
-.clear-cart-btn:hover {
-    background: #fdf2f2 !important;
-    color: #ff4d4d !important;
-    border-color: #ff4d4d !important;
-}
+/* --- About Section --- */
+.about { background-color: #FFF5E6 !important; padding: 80px 20px !important; text-align: center !important; margin-top: 40px !important; border-top: 1px solid #FFEDCC; line-height: 1.8 !important; color: #5C3A00 !important;}
+.about-content { max-width: 800px !important; margin: 0 auto !important;}
+.about h2 { font-size: 32px !important; margin-bottom: 20px !important; display: flex; align-items: center; justify-content: center; gap: 10px; }
+.story-highlight { border-left: 5px solid #FFD27F !important; border-right: 5px solid #FFD27F !important; margin: 40px auto !important; font-style: italic !important; font-size: 1.2rem !important; font-weight: bold !important; color: #B35400 !important; background: rgba(255, 255, 255, 0.6) !important; box-shadow: 0 4px 15px rgba(0,0,0,0.05) !important; padding: 20px; border-radius: 15px;}
+
+/* --- Footer --- */
+footer { background: #5C3A00 !important; color: #FFD27F !important; padding: 60px 20px 30px !important; display: flex !important; flex-direction: column !important; align-items: center !important; gap: 25px !important; }
+footer a { color: white !important; text-decoration: none !important; display: flex !important; align-items: center !important; gap: 8px !important; transition: 0.3s !important; padding: 5px 10px !important; border-radius: 5px !important; }
 
 /* --- Cart Sidebar --- */
 #cart-sidebar.cart-panel { 
@@ -135,17 +130,73 @@ button { background: linear-gradient(90deg,#FFD27F,#FFC966); color:#5C3A00; bord
 #cart-sidebar.cart-panel.open { right: 0 !important; }
 #cart-items { flex: 1 !important; overflow-y: auto !important; margin: 20px 0 !important; padding-right: 5px !important; }
 
-/* --- 其他基礎 --- */
+/* --- 回到最上層浮動按鈕 --- */
 #back-to-top {
-    position: fixed; bottom: 30px; right: 30px; background: #FFD27F; color: #5C3A00;
-    width: 50px; height: 50px; border-radius: 50%; display: flex; justify-content: center;
-    align-items: center; font-size: 24px; text-decoration: none; box-shadow: 0 4px 10px rgba(0,0,0,0.15);
-    z-index: 9998; opacity: 0; visibility: hidden; transition: all 0.3s ease;
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    background: #FFD27F;
+    color: #5C3A00;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 24px;
+    text-decoration: none;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+    z-index: 9998; 
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
 }
-#back-to-top.show { opacity: 1; visibility: visible; }
+#back-to-top.show {
+    opacity: 1;
+    visibility: visible;
+}
+#back-to-top:hover {
+    transform: translateY(-5px);
+    background: #FFC966;
+}
 
+/* Mobile Adaptability */
 @media (max-width: 480px) {
     #cart-sidebar.cart-panel { width: 100% !important; right: -100% !important; }
     #cart-sidebar.cart-panel.open { right: 0 !important; }
     body { padding-top: 220px; }
+}
+
+/* --- 提示泡泡 (Toast) 樣式 --- */
+#toast {
+    visibility: hidden;
+    min-width: 200px;
+    background-color: rgba(0, 0, 0, 0.8); /* 深色背景 */
+    color: #fff;
+    text-align: center;
+    border-radius: 30px; /* 圓角造型 */
+    padding: 12px 20px;
+    position: fixed;
+    z-index: 30000; /* 確保在最上層 */
+    left: 50%;
+    bottom: 30px;
+    transform: translateX(-50%);
+    font-size: 14px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+}
+
+/* 顯示時的動畫類別 */
+#toast.show {
+    visibility: visible;
+    animation: fadein 0.5s, fadeout 0.5s 2.5s;
+}
+
+@keyframes fadein {
+    from { bottom: 0; opacity: 0; }
+    to { bottom: 30px; opacity: 1; }
+}
+
+@keyframes fadeout {
+    from { bottom: 30px; opacity: 1; }
+    to { bottom: 0; opacity: 0; }
 }

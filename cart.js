@@ -1,5 +1,7 @@
+// ⚠️ 重要：請務必將此處替換為「部署」後取得的「網頁應用程式 URL」(結尾必須是 /exec)
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw5yI52vNUDdMxkY3Tkq4_opYQUWlK3nt15HnAR-OLLj1TDBeGe8K6bn8d-AW6Aec4Q/exec';
 
+// 1. 商品資料庫
 const allProducts = [
     { id: 1, category: 'cat-treats', name: '🐱 鮮肉凍乾', price: 280, img: 'https://picsum.photos/200?random=1' },
     { id: 2, category: 'cat-treats', name: '🐱 化毛肉泥', price: 65, img: 'https://picsum.photos/200?random=2' },
@@ -15,24 +17,29 @@ let cart = JSON.parse(localStorage.getItem('cherryEasonCart')) || [];
 let isSubmitting = false;
 
 window.onload = () => {
+    // 1. 初始化顯示商品與購物車
     renderProducts(allProducts);
     updateCart();
 
-    // 搜尋功能
+    // 2. 搜尋功能邏輯
     const searchInput = document.getElementById('product-search');
     if (searchInput) {
         searchInput.addEventListener('input', function(e) {
             const term = e.target.value.toLowerCase().trim();
             const filtered = allProducts.filter(p => 
-                p.name.toLowerCase().includes(term) || p.category.toLowerCase().includes(term)
+                p.name.toLowerCase().includes(term) || 
+                p.category.toLowerCase().includes(term)
             );
             renderProducts(filtered);
+            
             const titleEl = document.getElementById('current-category-name');
-            if (titleEl) titleEl.innerText = term ? `🔍 正在搜尋：${term}` : '🌟 精選所有商品';
+            if (titleEl) {
+                titleEl.innerText = term ? `🔍 正在搜尋：${term}` : '🌟 精選所有商品';
+            }
         });
     }
 
-    // 表單切換與滾動監聽保持原樣...
+    // 3. 監聽付款方式切換
     const paymentSelect = document.getElementById('payment-method');
     if (paymentSelect) {
         paymentSelect.addEventListener('change', function() {
@@ -41,6 +48,7 @@ window.onload = () => {
         });
     }
 
+    // 4. 監聽取貨方式切換
     const deliverySelect = document.getElementById('delivery-method');
     if (deliverySelect) {
         deliverySelect.addEventListener('change', function() {
@@ -56,28 +64,29 @@ window.onload = () => {
         });
     }
 
+    // 5. 監聽滾動事件，控制「回到最上層」按鈕顯示
     window.addEventListener('scroll', function() {
         const topBtn = document.getElementById('back-to-top');
         if (topBtn) {
-            if (window.scrollY > 300) topBtn.classList.add('show');
-            else topBtn.classList.remove('show');
+            // 當往下滾動超過 300px 時顯示按鈕
+            if (window.scrollY > 300) {
+                topBtn.classList.add('show');
+            } else {
+                topBtn.classList.remove('show');
+            }
         }
     });
-
-    // 監聽表單提交
-    const form = document.getElementById('checkout-form');
-    if (form) {
-        form.addEventListener('submit', handleFormSubmit);
-    }
 }; 
 
 function renderProducts(products) {
     const grid = document.getElementById('product-grid');
     if (!grid) return;
+    
     if (products.length === 0) {
-        grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: #999; padding: 40px;">🔍 找不到商品🐾</p>';
+        grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: #999; padding: 40px; font-size: 1.1rem;">🔍 找不到相關商品，請嘗試其他關鍵字🐾</p>';
         return;
     }
+
     grid.innerHTML = products.map(p => `
         <div class="product">
             <img src="${p.img}" alt="${p.name}">
@@ -88,23 +97,14 @@ function renderProducts(products) {
     `).join('');
 }
 
-// 🟢 優化分類與選中狀態
-function filterProducts(category, element) {
-    // 處理 CSS 選中狀態
-    if (element) {
-        document.querySelectorAll('.nav a, .dropdown-content a').forEach(el => el.classList.remove('active'));
-        element.classList.add('active');
-        const dropbtn = document.querySelector('.dropbtn');
-        if (element.closest('.dropdown-content')) dropbtn.classList.add('active');
-        else dropbtn.classList.remove('active');
-    }
-
+function filterProducts(category) {
     const filtered = (category === 'all') ? allProducts : allProducts.filter(p => p.category === category);
     renderProducts(filtered);
-    
     const titleEl = document.getElementById('current-category-name');
     if (titleEl) titleEl.innerText = category === 'all' ? '🌟 精選所有商品' : '🐾 分類商品';
     
+    // 錨點優化：只有在點擊「特定分類」時，才會強迫捲動到商品區
+    // 若點擊「首頁」，則交由 HTML 錨點自動回到最上方
     if (category !== 'all') {
         const shop = document.getElementById('shop');
         if (shop) shop.scrollIntoView({ behavior: 'smooth' });
@@ -116,15 +116,6 @@ function addToCart(name, price) {
     item ? item.qty++ : cart.push({ name, price, qty: 1 });
     saveAndUpdate();
     showToast(`✅ ${name} 已加入！`);
-}
-
-// 🗑️ 清空購物車功能
-function clearCart() {
-    if (confirm("確定要清空購物車嗎？🐾")) {
-        cart = [];
-        saveAndUpdate();
-        showToast("🗑️ 購物車已清空");
-    }
 }
 
 function updateCart() {
@@ -148,20 +139,29 @@ function updateCart() {
     }).join('');
 
     sidebar.innerHTML = `
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-            <h3 style="margin:0; color:#5C3A00; font-size: 1.4rem;">🛒 購物清單</h3>
-            <span onclick="toggleCart()" style="cursor:pointer; font-size:32px; color:#5C3A00;">&times;</span>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+            <h3 style="margin:0; color:#5C3A00;">🛒 購物清單</h3>
+            <span onclick="toggleCart()" style="cursor:pointer; font-size:28px;">&times;</span>
         </div>
-        <div id="cart-items">
+        ${cart.length > 0 ? '<button onclick="clearCart()" class="clear-cart-btn">🗑️ 清空購物車</button>' : ''}
+        <div id="cart-items" style="flex:1; overflow-y:auto;">
             ${itemsHtml || '<p style="text-align:center; color:gray; margin-top:30px;">車內空空的🐾</p>'}
         </div>
-        <div class="cart-footer">
-            ${cart.length > 0 ? '<button class="clear-cart-btn" onclick="clearCart()">🗑️ 清空購物車</button>' : ''}
-            <h4 style="text-align:right; color:#5C3A00; font-size: 1.2rem;">總金額 NT$${sum}</h4>
-            <button onclick="checkout()" style="width:100%; padding:14px; background:#5C3A00; color:white; border:none; border-radius:10px; cursor:pointer; font-weight:bold; font-size: 1.1rem; margin-top:10px;">確認結帳</button>
+        <div class="cart-footer" style="border-top:1px solid #eee; padding-top:15px;">
+            <h4 style="text-align:right; color:#5C3A00; margin:0;">總金額 NT$${sum}</h4>
+            <button onclick="checkout()" style="width:100%; padding:14px; background:#5C3A00; color:white; border:none; border-radius:10px; cursor:pointer; font-weight:bold; margin-top:10px;">確認結帳</button>
         </div>
     `;
     if (countEl) countEl.innerText = qtyTotal;
+}
+
+// 補上清空邏輯
+function clearCart() {
+    if(confirm("確定要清空購物車嗎？")) {
+        cart = [];
+        saveAndUpdate();
+        showToast("🗑️ 購物車已清空");
+    }
 }
 
 function changeQty(index, d) {
@@ -207,34 +207,53 @@ function closeModal() {
     if (modal) modal.style.display = "none";
 }
 
-// 處理表單提交
-function handleFormSubmit(e) {
+document.addEventListener('submit', function(e) {
+    if (e.target.id !== 'checkout-form') return;
     e.preventDefault();
     if (isSubmitting) return;
 
-    const name = document.getElementById("name").value.trim();
-    const phone = document.getElementById("phone").value.trim();
-    const email = document.getElementById("email") ? document.getElementById("email").value.trim() : "未提供";
-    const delivery = document.getElementById("delivery-method").value;
-    const payment = document.getElementById("payment-method").value;
-    const note = document.getElementById("order-note") ? document.getElementById("order-note").value.trim() : "無備註";
+    const nameEl = document.getElementById("name");
+    const phoneEl = document.getElementById("phone");
+    const deliveryEl = document.getElementById("delivery-method");
+    const paymentEl = document.getElementById("payment-method");
+    
+    if (!nameEl || !phoneEl || !deliveryEl || !paymentEl) {
+        alert("系統錯誤：找不到必要的表單欄位");
+        return;
+    }
+
+    const name = nameEl.value.trim();
+    const phone = phoneEl.value.trim();
+    const emailEl = document.getElementById("email");
+    const email = emailEl ? emailEl.value.trim() : "未提供";
+    const delivery = deliveryEl.value;
+    const payment = paymentEl.value;
+    const noteEl = document.getElementById("order-note");
+    const note = noteEl ? noteEl.value.trim() : "無備註";
 
     let finalAddress = "";
     if (delivery === '超商取貨') {
-        const store = document.getElementById("store-info") ? document.getElementById("store-info").value.trim() : "";
-        if (store.length < 2) return alert("❌ 請輸入門市資訊");
+        const storeInfoEl = document.getElementById("store-info");
+        const store = storeInfoEl ? storeInfoEl.value.trim() : "";
+        if (store.length < 2) return alert("❌ 請輸入超商門市名稱與店號");
         finalAddress = "【超商】" + store;
     } else {
-        const addr = document.getElementById("address") ? document.getElementById("address").value.trim() : "";
+        const addrEl = document.getElementById("address");
+        const addr = addrEl ? addrEl.value.trim() : "";
         if (addr.length < 5) return alert("❌ 地址請輸入完整內容");
         finalAddress = "【宅配】" + addr;
     }
 
+    if (name.length < 2) return alert("❌ 姓名請輸入至少 2 個字");
     if (!/^09\d{8}$/.test(phone)) return alert("❌ 手機格式錯誤");
+    if (!payment) return alert("❌ 請選擇付款方式");
 
     isSubmitting = true;
     const btn = document.getElementById("submit-btn");
-    if (btn) { btn.innerText = "🚀 傳送中..."; btn.disabled = true; }
+    if (btn) {
+        btn.innerText = "🚀 訂單傳送中...";
+        btn.disabled = true;
+    }
 
     const formData = new FormData();
     formData.append("name", name);
@@ -249,15 +268,28 @@ function handleFormSubmit(e) {
 
     fetch(SCRIPT_URL, { method: 'POST', body: formData, mode: 'no-cors' })
     .then(() => {
-        alert("🎉 訂單成功送出！");
+        alert("🎉 訂單成功送出！\n我們將盡快為您處理。");
         cart = []; 
         saveAndUpdate(); 
         closeModal(); 
         e.target.reset();
+        
+        const info = document.getElementById('transfer-info');
+        if (info) info.style.display = 'none';
+        const addrSec = document.getElementById('address-section');
+        if (addrSec) addrSec.style.display = 'none';
+        const storeSec = document.getElementById('store-section');
+        if (storeSec) storeSec.style.display = 'none';
     })
-    .catch(() => alert("傳送失敗，請稍後再試。"))
+    .catch((err) => {
+        console.error("傳送失敗:", err);
+        alert("傳送失敗，請稍後再試。");
+    })
     .finally(() => {
         isSubmitting = false;
-        if (btn) { btn.innerText = "確認送出訂單"; btn.disabled = false; }
+        if (btn) {
+            btn.innerText = "確認送出訂單";
+            btn.disabled = false;
+        }
     });
-}
+});

@@ -4,21 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cherry&Eason Pet | 寵物精品店</title>
-<meta name="description" content="Cherry&Eason Pet 寵物精品店 - 提供高品質貓貓狗狗零食與用品，給毛孩最天然的愛。">
-<meta name="keywords" content="寵物用品, 貓零食, 狗零食, 寵物電商, Cherry&Eason">
-<meta name="author" content="Cherry&Eason Pet">
-
-<meta property="og:title" content="Cherry&Eason Pet | 毛孩的秘密基地">
-<meta property="og:description" content="精選天然原肉凍乾、舒適用品，點擊進入為您的毛小孩挑選最好的禮物！🐾">
-<meta property="og:type" content="website">
-<meta property="og:url" content="https://你的帳號名稱.github.io/你的專案名稱/">
-<meta property="og:image" content="https://picsum.photos/1200/630?random=100"> <meta property="og:site_name" content="Cherry&Eason Pet">
-
-<link rel="icon" href="https://img.icons8.com/fluency/48/dog-paw.png" type="image/png">
     <link rel="stylesheet" href="style.css">
 </head>
-<body id="top"> 
-<header class="header">
+<body id="top"> <header class="header">
     <div class="header-top">
         <div class="logo">Cherry&Eason Pet</div>
         <span class="cart-icon" id="cart-icon" onclick="toggleCart()" style="cursor: pointer;">
@@ -27,14 +15,14 @@
     </div>
 
     <nav class="nav">
-        <a href="#top" id="nav-home" class="active" onclick="filterProducts('all', this)">首頁</a>
+        <a href="#top" onclick="filterProducts('all', this)">首頁</a>
         <div class="dropdown">
             <a href="javascript:void(0)" class="dropbtn">商品分類 ▾</a>
             <div class="dropdown-content">
-                <a href="javascript:void(0)" onclick="filterProducts('cat-treats', this)">🐱 貓貓零食</a>
-                <a href="javascript:void(0)" onclick="filterProducts('dog-treats', this)">🐶 狗狗零食</a>
-                <a href="javascript:void(0)" onclick="filterProducts('cat-supplies', this)">🐈 貓貓用品</a>
-                <a href="javascript:void(0)" onclick="filterProducts('dog-supplies', this)">🐕 狗狗用品</a>
+                <a href="javascript:void(0)" onclick="filterProducts('cat-treats')">🐱 貓貓零食</a>
+                <a href="javascript:void(0)" onclick="filterProducts('dog-treats')">🐶 狗狗零食</a>
+                <a href="javascript:void(0)" onclick="filterProducts('cat-supplies')">🐈 貓貓用品</a>
+                <a href="javascript:void(0)" onclick="filterProducts('dog-supplies')">🐕 狗狗用品</a>
             </div>
         </div>
         <a href="#about-section">品牌故事</a>
@@ -80,6 +68,7 @@
             <h3 style="margin:0; color:#5C3A00;">📋 填寫訂購資訊</h3>
             <span onclick="closeModal()" style="cursor:pointer; font-size:24px; color:#999;">&times;</span>
         </div>
+        
         <form id="checkout-form">
             <div style="margin-bottom: 12px;">
                 <label style="display:block; margin-bottom:5px; font-weight:bold; color:#555;">收件人姓名</label>
@@ -93,49 +82,73 @@
                 <label style="display:block; margin-bottom:5px; font-weight:bold; color:#555;">電子郵件</label>
                 <input type="email" id="email" name="email" placeholder="example@mail.com" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box;" required>
             </div>
+
             <div style="margin-bottom: 12px;">
                 <label style="display:block; margin-bottom:5px; font-weight:bold; color:#555;">📦 取貨方式</label>
                 <select id="delivery-method" name="delivery_method" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; background: white; cursor: pointer;" required>
                     <option value="" disabled selected>請選擇取貨方式</option>
                     <option value="宅配/郵寄">🏠 宅配/郵寄</option>
-                    <option value="超商取貨">🏪 超商取貨</option>
+                    <option value="超商取貨">🏪 超商取貨 (7-11/全家/萊爾富)</option>
                 </select>
             </div>
+
             <div id="address-section" style="margin-bottom: 12px; display: none;">
                 <label style="display:block; margin-bottom:5px; font-weight:bold; color:#555;">收件地址</label>
                 <input type="text" id="address" name="address" placeholder="請輸入完整的收件地址" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box;">
             </div>
+
             <div id="store-section" style="margin-bottom: 12px; display: none; background: #f9f9f9; padding: 10px; border-radius: 8px; border: 1px dashed #ccc;">
                 <label style="display:block; margin-bottom:5px; font-weight:bold; color:#555;">超商門市名稱與店號</label>
                 <input type="text" id="store-info" name="store_info" placeholder="例如：7-11 鑫台中門市 (店號:123456)" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box;">
+                <small style="color: #888; display: block; margin-top: 5px;">* 請務必填寫正確的超商名稱及店號</small>
             </div>
+            
             <div style="margin-bottom: 12px;">
                 <label style="display:block; margin-bottom:5px; font-weight:bold; color:#555;">💰 付款方式</label>
                 <select id="payment-method" name="payment_method" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; background: white; cursor: pointer;" required>
                     <option value="" disabled selected>請選擇付款方式</option>
-                    <option value="貨到付款">🚚 貨到付款</option>
-                    <option value="銀行轉帳">🏦 銀行轉帳</option>
+                    <option value="貨到付款">🚚 貨到付款 (含超商取貨付款)</option>
+                    <option value="銀行轉帳">🏦 銀行轉帳 (先匯款後出貨)</option>
                 </select>
             </div>
-            <div id="transfer-info" style="display: none; background: #fff9e6; padding: 12px; border-radius: 8px; margin-bottom: 12px; border: 1px solid #ffeeba;">
-                銀行代碼：822 (中國信託) 帳號：123-4567-89012
+
+            <div id="transfer-info" style="display: none; background: #fff9e6; padding: 12px; border-radius: 8px; margin-bottom: 12px; border: 1px solid #ffeeba; font-size: 0.9rem; line-height: 1.5;">
+                <p style="margin:0 0 5px 0; font-weight:bold; color:#856404;">🏦 匯款帳號資訊：</p>
+                銀行代碼：822 (中國信託)<br>
+                帳號：123-4567-89012<br>
+                <small style="color: #666;">* 轉帳後請於下方備註告知後五碼</small>
             </div>
+
             <div style="margin-bottom: 20px;">
-                <label style="display:block; margin-bottom:5px; font-weight:bold; color:#555;">📝 訂單備註</label>
-                <textarea id="order-note" name="note" rows="2" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px;"></textarea>
+                <label style="display:block; margin-bottom:5px; font-weight:bold; color:#555;">📝 訂單備註 (選填)</label>
+                <textarea id="order-note" name="note" rows="2" placeholder="備註收貨時間或轉帳後五碼..." style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; resize: none; box-sizing: border-box; font-family: inherit;"></textarea>
             </div>
-            <button type="submit" id="submit-btn" style="width: 100%; padding: 14px; background: #5C3A00; color: white; border: none; border-radius: 10px; font-weight: bold;">🚀 確認送出訂單</button>
+
+            <div style="margin-top: 10px;">
+                <button type="submit" id="submit-btn" style="width: 100%; padding: 14px; background: #5C3A00; color: white; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; font-size: 1rem; margin-bottom: 10px;">
+                    🚀 確認送出訂單
+                </button>
+                <button type="button" onclick="closeModal()" style="width: 100%; padding: 10px; background: #eee; border: none; border-radius: 8px; cursor: pointer; color: #666; font-weight: bold;">
+                    ⬅️ 返回購物車
+                </button>
+            </div>
         </form>
     </div>
 </div>
 
 <footer id="footer-section">
+    <h3>聯絡我們</h3>
+    <p>
+        <a href="#">📸 IG：點此前往</a>
+        <a href="#">💬 LINE：點此前往</a>
+    </p>
     <p>© 2026 Cherry&Eason Pet. All Rights Reserved.</p>
 </footer>
 
 <div id="cart-sidebar" class="cart-panel"></div>
 <div id="toast"></div>
-<a href="#top" id="back-to-top">⬆️</a>
+
+<a href="#top" id="back-to-top" title="回到最上層">⬆️</a>
 
 <script src="cart.js"></script>
 </body>
