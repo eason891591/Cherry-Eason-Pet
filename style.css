@@ -15,6 +15,23 @@ body { font-family: 'Segoe UI', Arial, sans-serif; margin:0; padding-top:180px; 
 .header-top { width:90%; display:flex; justify-content:center; position:relative; }
 .logo { font-size:26px; font-weight:bold; color: #5C3A00; }
 .cart-icon { position:absolute; right:20px; top:50%; transform:translateY(-50%); cursor:pointer; font-size: 22px; }
+/* --- 修正購物車圖示與數字擁擠 --- */
+.cart-icon {
+    display: flex !important;
+    align-items: center !important;
+    gap: 5px !important; /* 在圖示與數字之間增加 5px 的間隙 */
+}
+
+#cart-count {
+    background: #5C3A00; /* 深色背景讓數字更明顯 */
+    color: white;
+    font-size: 12px;
+    padding: 2px 6px;
+    border-radius: 10px; /* 變成小膠囊狀 */
+    min-width: 15px;
+    text-align: center;
+    font-weight: bold;
+}
 
 .nav { margin:10px 0; display:flex; gap:20px; position: relative; }
 .nav a { 
