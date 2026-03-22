@@ -1,27 +1,31 @@
 // ⚠️ 重要：請務必將此處替換為「部署」後取得的「網頁應用程式 URL」(結尾必須是 /exec)
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw5yI52vNUDdMxkY3Tkq4_opYQUWlK3nt15HnAR-OLLj1TDBeGe8K6bn8d-AW6Aec4Q/exec';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzpGz-gXoyoqyLTTxueCw_aOfKo2S4_ObcrKh0dv_8YlnKC1-9B2vQRqGuF4dxexN0s/exec';
 
 // 1. 商品資料庫
-const allProducts = [
-    { id: 1, category: 'cat-treats', name: '🐱 鮮肉凍乾', price: 280, img: 'https://picsum.photos/200?random=1' },
-    { id: 2, category: 'cat-treats', name: '🐱 化毛肉泥', price: 65, img: 'https://picsum.photos/200?random=2' },
-    { id: 3, category: 'dog-treats', name: '🐶 手作雞肉乾', price: 250, img: 'https://picsum.photos/200?random=3' },
-    { id: 4, category: 'cat-supplies', name: '🐈 舒適貓窩', price: 850, img: 'https://picsum.photos/200?random=4' },
-    { id: 5, category: 'dog-supplies', name: '🐕 防暴衝牽繩', price: 480, img: 'https://picsum.photos/200?random=5' },
-    { id: 6, category: 'cat-treats', name: '🐱 鮮魚罐頭', price: 45, img: 'https://picsum.photos/200?random=6' },
-    { id: 7, category: 'dog-treats', name: '🐶 耐咬牛皮骨', price: 190, img: 'https://picsum.photos/200?random=7' },
-    { id: 10, category: 'cat-treats', name: '🐱 有機貓草', price: 120, img: 'https://picsum.photos/200?random=10' }
-];
+let allProducts = []; // 初始設為空，等待雲端抓取
 
 let cart = JSON.parse(localStorage.getItem('cherryEasonCart')) || [];
 let isSubmitting = false;
-
 window.onload = () => {
-    // 1. 初始化顯示商品與購物車
-    renderProducts(allProducts);
+    // 1. 從雲端抓取商品資料 (修正重點)
+    const grid = document.getElementById('product-grid');
+    if (grid) grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; padding: 40px;">🐾 正在從雲端載入商品...</p>';
+
+    fetch(SCRIPT_URL)
+        .then(res => res.json())
+        .then(data => {
+            allProducts = data; // 將抓到的資料存入變數
+            renderProducts(allProducts); // 取得資料後才進行第一次渲染
+        })
+        .catch(err => {
+            console.error("抓取失敗:", err);
+            if (grid) grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: red; padding: 40px;">❌ 載入失敗，請確認 Script URL 是否正確</p>';
+        });
+
+    // 2. 初始化顯示購物車 (從 LocalStorage 讀取)
     updateCart();
 
-    // 2. 搜尋功能邏輯
+    // 3. 搜尋功能邏輯 (保持不變)
     const searchInput = document.getElementById('product-search');
     if (searchInput) {
         searchInput.addEventListener('input', function(e) {
