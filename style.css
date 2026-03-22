@@ -161,42 +161,124 @@ footer a { color: white !important; text-decoration: none !important; display: f
 }
 
 /* Mobile Adaptability */
-@media (max-width: 480px) {
-    #cart-sidebar.cart-panel { width: 100% !important; right: -100% !important; }
-    #cart-sidebar.cart-panel.open { right: 0 !important; }
-    body { padding-top: 220px; }
-}
+/* --- 手機版最終優化方案：一排兩個商品 --- */
+@media (max-width: 480px) {/* --- 輔助區塊瘦身 (Hero, About, Footer) --- */
 
-/* --- 提示泡泡 (Toast) 樣式 --- */
-#toast {
-    visibility: hidden;
-    min-width: 200px;
-    background-color: rgba(0, 0, 0, 0.8); /* 深色背景 */
-    color: #fff;
-    text-align: center;
-    border-radius: 30px; /* 圓角造型 */
-    padding: 12px 20px;
-    position: fixed;
-    z-index: 30000; /* 確保在最上層 */
-    left: 50%;
-    bottom: 30px;
-    transform: translateX(-50%);
-    font-size: 14px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-}
+    /* 1. 縮減 Hero 歡迎區：減少上下留白，縮小文字 */
+    .hero {
+        padding: 30px 15px !important; /* 原本可能是 120px，手機版縮到 30px */
+        margin-bottom: 10px !important;
+        min-height: auto !important; /* 取消最小高度限制 */
+    }
+    .hero h1 {
+        font-size: 1.5rem !important; /* 標題縮小 */
+        margin-bottom: 5px !important;
+    }
+    .hero p {
+        font-size: 0.9rem !important;
+        margin-top: 0 !important;
+    }
 
-/* 顯示時的動畫類別 */
-#toast.show {
-    visibility: visible;
-    animation: fadein 0.5s, fadeout 0.5s 2.5s;
-}
+    /* 2. 縮減 About 品牌故事：讓它看起來像個精緻的小簡介 */
+    .about {
+        padding: 30px 20px !important;
+    }
+    .about-content h2 {
+        font-size: 1.4rem !important;
+        margin-bottom: 15px !important;
+    }
+    .about-content p {
+        font-size: 0.95rem !important;
+        line-height: 1.6 !important;
+    }
 
-@keyframes fadein {
-    from { bottom: 0; opacity: 0; }
-    to { bottom: 30px; opacity: 1; }
-}
+    /* 3. 縮減 Footer 頁尾：減少間距，讓聯絡資訊更緊湊 */
+    footer {
+        padding: 30px 20px !important;
+    }
+    footer h3 {
+        font-size: 1.2rem !important;
+        margin-bottom: 15px !important;
+    }
+    .footer-info p {
+        margin: 5px 0 !important;
+        font-size: 0.9rem !important;
+    }
+    .social-links {
+        margin-top: 15px !important;
+    }
 
-@keyframes fadeout {
-    from { bottom: 30px; opacity: 1; }
-    to { bottom: 0; opacity: 0; }
+    /* 4. 調整回到最上層按鈕：手機版可以稍微縮小，避免擋住商品 */
+    #back-to-top {
+        width: 40px !important;
+        height: 40px !important;
+        bottom: 20px !important;
+        right: 20px !important;
+        font-size: 20px !important;
+    }
+    /* 1. 調整 Body 頂部間距，避免被導覽列遮擋 */
+    body { 
+        padding-top: 200px !important; 
+    }
+
+    /* 2. 解決導覽列擠在一起：允許換行並調整間距 */
+    .nav {
+        flex-wrap: wrap; /* 空間不足時自動換行 */
+        justify-content: center;
+        gap: 8px 12px !important;
+        margin: 5px 0 !important;
+    }
+
+    .nav a {
+        font-size: 14px !important;
+        padding: 4px 8px !important;
+    }
+
+    /* 3. 商品網格：設定為一排兩個 */
+    .product-grid {
+        display: flex !important;
+        flex-wrap: wrap !important;
+        justify-content: space-between !important;
+        padding: 10px !important;
+        gap: 10px !important;
+    }
+
+    /* 4. 商品卡片縮放：寬度約為 48% 以確保一排兩個並留有間隙 */
+    .product {
+        width: calc(50% - 15px) !important; 
+        margin: 0 !important;
+        padding: 10px !important;
+        box-sizing: border-box;
+    }
+
+    .product img {
+        height: 120px !important; /* 縮小手機版的圖片高度 */
+        object-fit: cover;
+    }
+
+    .product h3 {
+        font-size: 0.95rem !important; /* 縮小標題字體 */
+        margin: 8px 0 !important;
+        height: 2.8em; /* 固定高度防止因字數不同導致卡片長短不一 */
+        overflow: hidden;
+    }
+
+    .product p {
+        font-size: 0.9rem !important;
+    }
+
+    .product button {
+        padding: 8px 5px !important;
+        font-size: 0.85rem !important;
+    }
+
+    /* 5. 側邊欄全螢幕 */
+    #cart-sidebar.cart-panel { 
+        width: 100% !important; 
+        right: -100% !important; 
+    }
+    
+    #cart-sidebar.cart-panel.open { 
+        right: 0 !important; 
+    }
 }

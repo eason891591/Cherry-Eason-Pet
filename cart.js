@@ -139,29 +139,19 @@ function updateCart() {
     }).join('');
 
     sidebar.innerHTML = `
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-            <h3 style="margin:0; color:#5C3A00;">🛒 購物清單</h3>
-            <span onclick="toggleCart()" style="cursor:pointer; font-size:28px;">&times;</span>
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <h3 style="margin:0; color:#5C3A00; font-size: 1.4rem;">🛒 購物清單</h3>
+            <span onclick="toggleCart()" style="cursor:pointer; font-size:32px; color:#5C3A00;">&times;</span>
         </div>
-        ${cart.length > 0 ? '<button onclick="clearCart()" class="clear-cart-btn">🗑️ 清空購物車</button>' : ''}
-        <div id="cart-items" style="flex:1; overflow-y:auto;">
+        <div id="cart-items">
             ${itemsHtml || '<p style="text-align:center; color:gray; margin-top:30px;">車內空空的🐾</p>'}
         </div>
-        <div class="cart-footer" style="border-top:1px solid #eee; padding-top:15px;">
-            <h4 style="text-align:right; color:#5C3A00; margin:0;">總金額 NT$${sum}</h4>
-            <button onclick="checkout()" style="width:100%; padding:14px; background:#5C3A00; color:white; border:none; border-radius:10px; cursor:pointer; font-weight:bold; margin-top:10px;">確認結帳</button>
+        <div class="cart-footer">
+            <h4 style="text-align:right; color:#5C3A00; font-size: 1.2rem;">總金額 NT$${sum}</h4>
+            <button onclick="checkout()" style="width:100%; padding:14px; background:#5C3A00; color:white; border:none; border-radius:10px; cursor:pointer; font-weight:bold; font-size: 1.1rem; margin-top:10px;">確認結帳</button>
         </div>
     `;
     if (countEl) countEl.innerText = qtyTotal;
-}
-
-// 補上清空邏輯
-function clearCart() {
-    if(confirm("確定要清空購物車嗎？")) {
-        cart = [];
-        saveAndUpdate();
-        showToast("🗑️ 購物車已清空");
-    }
 }
 
 function changeQty(index, d) {
