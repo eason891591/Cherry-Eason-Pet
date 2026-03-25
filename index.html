@@ -112,6 +112,7 @@
   const db = getFirestore(app);
   const provider = new GoogleAuthProvider();
   
+  // 重要：將 Firebase 實例掛載到全域 window 物件，讓外部的 cart.js 能存取
   window.firebaseAuth = auth;
   window.db = db;
   window.firestoreTools = { collection, addDoc, serverTimestamp };

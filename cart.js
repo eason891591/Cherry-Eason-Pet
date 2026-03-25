@@ -169,11 +169,12 @@ function closeModal() { document.getElementById("checkout-modal").style.display 
 function submitOrder() {
     if (isSubmitting) return;
 
+    // 擷取表單資料
     const name = document.getElementById("name")?.value.trim() || "";
     const phone = document.getElementById("phone")?.value.trim() || "";
     const email = document.getElementById("email")?.value.trim() || "";
     const delivery = document.getElementById("delivery-method")?.value || "";
-    const payment = document.getElementById("payment-method")?.value || "";
+    const payment = document.getElementById("payment-method")?.value || ""; // 付款方式
     const note = document.getElementById("order-note")?.value.trim() || "";
     const total_sum = cart.reduce((sum, i) => sum + (i.price * i.qty), 0);
     const order_details_text = cart.map(item => `${item.name} x ${item.qty}`).join(", ");
@@ -181,14 +182,16 @@ function submitOrder() {
     const user = window.firebaseAuth?.currentUser;
     const memberUid = user?.uid || "訪客";
 
-    if (!name || !phone) return alert("❌ 請填寫姓名與電話");
-    if (!/^09\d{8}$/.test(phone)) return alert("❌ 手機格式錯誤");
+    // --- 🛑 第一階段：嚴格資料校驗 ---
+    if (!name || !phone || !email) return alert("❌ 請完整填寫姓名、電話與電子郵件");
+    if (!/^09\d{8}$/.test(phone)) return alert("❌ 手機格式不正確");
     if (!delivery) return alert("❌ 請選擇取貨方式");
+    if (!payment) return alert("❌ 請選擇付款方式"); // 新增驗證邏輯
 
     let finalAddress = "";
     if (delivery === '超商取貨') {
         const store = document.getElementById("store-info")?.value.trim() || "";
-        if (store.length < 2) return alert("❌ 請填寫完整的超商門市名稱與店號");
+        if (store.length < 2) return alert("❌ 請填寫完整的超商門市資訊");
         finalAddress = "【超商】" + store;
     } else {
         const addr = document.getElementById("address")?.value.trim() || "";
@@ -196,10 +199,11 @@ function submitOrder() {
         finalAddress = "【宅配】" + addr;
     }
 
+    // --- 🚀 第二階段：執行傳送 ---
     isSubmitting = true;
     const btn = document.getElementById("submit-btn");
     if (btn) {
-        btn.innerText = "🚀 訂單傳送中...";
+        btn.innerText = "⏳ 處理中，請稍候...";
         btn.disabled = true;
     }
 
@@ -215,44 +219,55 @@ function submitOrder() {
     formData.append("order_details", order_details_text);
     formData.append("total_price", `NT$${total_sum}`);
 
-    // ✨ 修正後的寫入邏輯
-    const firestorePromise = (user && window.db && window.firestoreTools) 
-        ? window.firestoreTools.addDoc(window.firestoreTools.collection(window.db, "orders"), {
+    // 定義 Firestore 寫入 Promise
+    let firestorePromise = Promise.resolve();
+    if (user && window.db && window.firestoreTools) {
+        console.log("正在備份訂單至 Firebase...");
+        firestorePromise = window.firestoreTools.addDoc(window.firestoreTools.collection(window.db, "orders"), {
             userId: user.uid,
             userName: name,
             userEmail: email,
             details: order_details_text,
             total: `NT$${total_sum}`,
             address: finalAddress,
-            method: delivery,
+            deliveryMethod: delivery,
+            paymentMethod: payment,
             status: "pending",
             createdAt: window.firestoreTools.serverTimestamp()
-        }) 
-        : Promise.resolve();
+        });
+    }
 
+    // 同步執行所有任務
     Promise.all([
         fetch(SCRIPT_URL, { method: 'POST', body: formData, mode: 'no-cors' }),
         firestorePromise
     ])
     .then(() => {
+        console.log("✅ 訂單同步成功");
+        
+        // 記憶會員資料
         if (user) {
             const profile = {
-                phone: document.getElementById("phone")?.value || "",
-                address: document.getElementById("address")?.value || "",
-                store: document.getElementById("store-info")?.value || ""
+                phone: phone,
+                address: (delivery !== '超商取貨') ? document.getElementById("address")?.value : "",
+                store: (delivery === '超商取貨') ? document.getElementById("store-info")?.value : ""
             };
             localStorage.setItem(`profile_${user.uid}`, JSON.stringify(profile));
         }
 
-        alert("🎉 訂單成功送出！\n我們將盡快為您處理。");
+        // --- 🎉 第三階段：完成提示與重整 ---
+        alert("🎉 訂單已成功送出！\n頁面即將重新整理。");
+        
+        // 清空購物車狀態
         cart = []; 
-        saveAndUpdate();
-        closeModal();
-        document.getElementById('checkout-form')?.reset();
+        localStorage.removeItem('cherryEasonCart');
+        
+        // 核心修正：強制重新整理頁面以重置所有狀態
+        window.location.reload(); 
     })
     .catch(err => {
-        console.error("訂單處理失敗:", err);
-        alert("❌ 訂單處理失敗，請稍後再試");
+        console.error("❌ 訂單傳送失敗:", err);
+        alert("❌ 訂單傳送失敗，請稍後再試");
     })
     .finally(() => {
         isSubmitting = false;
