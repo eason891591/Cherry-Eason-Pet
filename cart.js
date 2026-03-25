@@ -127,7 +127,7 @@ function saveAndUpdate() {
     updateCart();
 }
 
-function toggleCart() { document.getElementById("cart-sidebar").classList.toggle("open"); }
+function toggleCart() { document.getElementById("cart-sidebar")?.classList.toggle("open"); }
 
 function showToast(msg) {
     let t = document.getElementById("toast");
@@ -141,7 +141,6 @@ function showToast(msg) {
     setTimeout(() => { t.className = ""; }, 3000);
 }
 
-// ✨ 結帳與自動填表
 function checkout() {
     if (!cart.length) return alert("購物車是空的喔！");
     toggleCart();
@@ -151,7 +150,6 @@ function checkout() {
     setTimeout(() => {
         const user = window.firebaseAuth?.currentUser;
         if (user) {
-            console.log("📍 偵測到會員，開始自動填寫...");
             if (document.getElementById("name")) document.getElementById("name").value = user.displayName || "";
             if (document.getElementById("email")) document.getElementById("email").value = user.email || "";
 
@@ -161,7 +159,6 @@ function checkout() {
                 if (document.getElementById("phone")) document.getElementById("phone").value = profile.phone || "";
                 if (document.getElementById("address")) document.getElementById("address").value = profile.address || "";
                 if (document.getElementById("store-info")) document.getElementById("store-info").value = profile.store || "";
-                console.log("✅ 歷史資料填寫完畢");
             }
         }
     }, 200);
@@ -169,7 +166,6 @@ function checkout() {
 
 function closeModal() { document.getElementById("checkout-modal").style.display = "none"; }
 
-// ✨ 方案 A：送出訂單（雙重備份：Sheets + Firestore）
 function submitOrder() {
     if (isSubmitting) return;
 
@@ -207,7 +203,6 @@ function submitOrder() {
         btn.disabled = true;
     }
 
-    // 1. 準備 Google Sheets 資料
     const formData = new FormData();
     formData.append("name", name);
     formData.append("phone", phone);
@@ -220,13 +215,9 @@ function submitOrder() {
     formData.append("order_details", order_details_text);
     formData.append("total_price", `NT$${total_sum}`);
 
-    // 同步執行：發送到 Google Sheets 並同步寫入 Firestore
-    Promise.all([
-        // A. 發送到 Google Sheets
-        fetch(SCRIPT_URL, { method: 'POST', body: formData, mode: 'no-cors' }),
-
-        // B. 如果是會員，寫入 Firestore 備份
-        (user ? window.db.collection("orders").add({
+    // ✨ 修正後的寫入邏輯
+    const firestorePromise = (user && window.db && window.firestoreTools) 
+        ? window.firestoreTools.addDoc(window.firestoreTools.collection(window.db, "orders"), {
             userId: user.uid,
             userName: name,
             userEmail: email,
@@ -235,11 +226,15 @@ function submitOrder() {
             address: finalAddress,
             method: delivery,
             status: "pending",
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        }) : Promise.resolve())
+            createdAt: window.firestoreTools.serverTimestamp()
+        }) 
+        : Promise.resolve();
+
+    Promise.all([
+        fetch(SCRIPT_URL, { method: 'POST', body: formData, mode: 'no-cors' }),
+        firestorePromise
     ])
     .then(() => {
-        // 成功後記憶使用者資訊
         if (user) {
             const profile = {
                 phone: document.getElementById("phone")?.value || "",
@@ -257,7 +252,7 @@ function submitOrder() {
     })
     .catch(err => {
         console.error("訂單處理失敗:", err);
-        alert("❌ 訂單處理失敗，請檢查網路連線");
+        alert("❌ 訂單處理失敗，請稍後再試");
     })
     .finally(() => {
         isSubmitting = false;
