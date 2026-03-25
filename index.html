@@ -27,8 +27,15 @@
             <a href="javascript:void(0)" onclick="filterProducts('dog-supplies')">🐕 狗狗用品</a>
         </div>
     </div>
+
         <a href="#about-section">品牌故事</a>
         <a href="#footer-section">聯絡我們</a>
+
+<div id="auth-section" style="display: inline-flex; align-items: center; gap: 10px; margin-left: 15px;">
+        <span id="user-info" style="font-size: 14px; color: #5C3A00;">訪客您好</span>
+        <button id="auth-btn" onclick="handleAuth()" style="padding: 5px 12px; font-size: 14px; border-radius: 15px;">Google 登入</button>
+    </div>
+
     </nav>
     <div class="search-bar">
         <input type="text" id="product-search" placeholder="搜尋商品名稱...">
@@ -153,6 +160,58 @@
 <div id="toast"></div>
 
 <a href="#top" id="back-to-top" title="回到最上層">⬆️</a>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+  import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+
+  // 你提供的專案配置
+  const firebaseConfig = {
+    apiKey: "AIzaSyDf663zw1zdWVCuPkN9hqtIQTE6dI4zaog",
+    authDomain: "cherryeason-pet.firebaseapp.com",
+    projectId: "cherryeason-pet",
+    storageBucket: "cherryeason-pet.firebasestorage.app",
+    messagingSenderId: "1025273907073",
+    appId: "1:1025273907073:web:b4c2c3451fc5de9ffe0a80",
+    measurementId: "G-RC10R4MGXM"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const provider = new GoogleAuthProvider();
+
+  // 登入/登出切換邏輯
+  window.handleAuth = async () => {
+    if (!auth.currentUser) {
+      try {
+        await signInWithPopup(auth, provider);
+      } catch (error) {
+        console.error("登入失敗:", error);
+        alert("登入失敗，請重試");
+      }
+    } else {
+      if(confirm("確定要登出嗎？")) await signOut(auth);
+    }
+  };
+
+  // 監聽登入狀態轉變
+  onAuthStateChanged(auth, (user) => {
+    const infoEl = document.getElementById('user-info');
+    const btnEl = document.getElementById('auth-btn');
+    const emailInput = document.getElementById('email');
+
+    if (user) {
+      infoEl.innerText = `Hi, ${user.displayName || '會員'}`;
+      btnEl.innerText = "登出";
+      // ✨ 自動填入 Email 到結帳表單
+      if (emailInput) emailInput.value = user.email; 
+    } else {
+      infoEl.innerText = "訪客您好";
+      btnEl.innerText = "Google 登入";
+      if (emailInput) emailInput.value = "";
+    }
+  });
+</script>
 
 <script src="cart.js"></script>
 </body>

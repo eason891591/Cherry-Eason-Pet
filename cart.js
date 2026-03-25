@@ -153,39 +153,47 @@ function checkout() {
 
 function closeModal() { document.getElementById("checkout-modal").style.display = "none"; }
 
-// 🚀 核心：獨立的送出訂單函式
+// 🚀 核心：修改後的送出訂單函式 (含會員支援與安全檢查)
 function submitOrder() {
     if (isSubmitting) return;
 
-    // 抓取欄位
-    const name = document.getElementById("name").value.trim();
-    const phone = document.getElementById("phone").value.trim();
-    const email = document.getElementById("email").value.trim();
-    const delivery = document.getElementById("delivery-method").value;
-    const payment = document.getElementById("payment-method").value;
-    const note = document.getElementById("order-note").value.trim();
+    // --- 1. 抓取欄位 (使用安全讀取方式，防止 null 報錯) ---
+    const name = document.getElementById("name")?.value.trim() || "";
+    const phone = document.getElementById("phone")?.value.trim() || "";
+    const email = document.getElementById("email")?.value.trim() || "";
+    const delivery = document.getElementById("delivery-method")?.value || "";
+    const payment = document.getElementById("payment-method")?.value || "";
+    const note = document.getElementById("order-note")?.value.trim() || "";
 
-    // 驗證
+    // ✨ 新增：嘗試獲取 Firebase 會員 UID (如果有的話)
+    // 這裡我們假設你在 index.html 的 script 裡有將 auth 暴露給 window
+    const memberUid = window.firebaseAuth?.currentUser?.uid || "非會員/訪客";
+
+    // --- 2. 驗證邏輯 ---
     if (!name || !phone) return alert("❌ 請填寫姓名與電話");
     if (!/^09\d{8}$/.test(phone)) return alert("❌ 手機格式錯誤");
     if (!delivery) return alert("❌ 請選擇取貨方式");
 
     let finalAddress = "";
     if (delivery === '超商取貨') {
-        const store = document.getElementById("store-info").value.trim();
-        if (store.length < 2) return alert("❌ 請填寫完整的超商門市名稱");
+        const store = document.getElementById("store-info")?.value.trim() || "";
+        if (store.length < 2) return alert("❌ 請填寫完整的超商門市名稱與店號");
         finalAddress = "【超商】" + store;
     } else {
-        const addr = document.getElementById("address").value.trim();
+        const addr = document.getElementById("address")?.value.trim() || "";
         if (addr.length < 5) return alert("❌ 請填寫完整的收件地址");
         finalAddress = "【宅配】" + addr;
     }
 
+    // --- 3. 開始傳送狀態 ---
     isSubmitting = true;
     const btn = document.getElementById("submit-btn");
-    btn.innerText = "🚀 訂單傳送中...";
-    btn.disabled = true;
+    if (btn) {
+        btn.innerText = "🚀 訂單傳送中...";
+        btn.disabled = true;
+    }
 
+    // --- 4. 封裝資料 ---
     const formData = new FormData();
     formData.append("name", name);
     formData.append("phone", phone);
@@ -194,9 +202,11 @@ function submitOrder() {
     formData.append("address", finalAddress);
     formData.append("payment_method", payment);
     formData.append("note", note);
+    formData.append("uid", memberUid); // ✨ 將會員 UID 傳送到 Google Sheets
     formData.append("order_details", cart.map(item => `${item.name} x ${item.qty}`).join(", "));
     formData.append("total_price", `NT$${cart.reduce((sum, i) => sum + (i.price * i.qty), 0)}`);
 
+    // --- 5. 執行傳送 ---
     fetch(SCRIPT_URL, { 
         method: 'POST', 
         body: formData, 
@@ -204,10 +214,10 @@ function submitOrder() {
     })
     .then(() => {
         alert("🎉 訂單成功送出！\n我們將盡快為您處理。");
-        cart = [];
+        cart = []; // 清空購物車
         saveAndUpdate();
         closeModal();
-        document.getElementById('checkout-form').reset();
+        document.getElementById('checkout-form')?.reset();
     })
     .catch(err => {
         console.error("傳送失敗:", err);
@@ -215,7 +225,9 @@ function submitOrder() {
     })
     .finally(() => {
         isSubmitting = false;
-        btn.innerText = "🚀 確認送出訂單";
-        btn.disabled = false;
+        if (btn) {
+            btn.innerText = "🚀 確認送出訂單";
+            btn.disabled = false;
+        }
     });
 }
