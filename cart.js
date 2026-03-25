@@ -144,27 +144,45 @@ function showToast(msg) {
 // ✨ 修改 1：在打開結帳視窗的同時，把資料填進去
 function checkout() {
     if (!cart.length) return alert("購物車是空的喔！");
+    
+    // 1. 先關閉購物車側欄，打開結帳彈窗
     toggleCart();
-    document.getElementById("checkout-modal").style.display = "flex";
+    const modal = document.getElementById("checkout-modal");
+    if (modal) modal.style.display = "flex";
 
-    // 抓取會員狀態並自動填寫
-    const user = window.firebaseAuth?.currentUser;
-    if (user) {
-        // 填入 Google 帳號的姓名與信箱
-        if (document.getElementById("name")) document.getElementById("name").value = user.displayName || "";
-        if (document.getElementById("email")) document.getElementById("email").value = user.email || "";
+    // 2. 核心修正：使用 setTimeout 確保格子都「長出來」了才填資料
+    setTimeout(() => {
+        // 從 window 抓取 Firebase 登入狀態
+        const user = window.firebaseAuth?.currentUser;
+        
+        if (user) {
+            console.log("📍 偵測到會員，開始自動填寫...");
 
-        // 去電腦記憶體找找看上次有沒有存過電話跟地址
-        const savedProfile = localStorage.getItem(`profile_${user.uid}`);
-        if (savedProfile) {
-            const profile = JSON.parse(savedProfile);
-            if (document.getElementById("phone")) document.getElementById("phone").value = profile.phone || "";
-            if (document.getElementById("address")) document.getElementById("address").value = profile.address || "";
-            if (document.getElementById("store-info")) document.getElementById("store-info").value = profile.store || "";
+            // 填入 Google 基本資料 (姓名、Email)
+            const nameInput = document.getElementById("name");
+            const emailInput = document.getElementById("email");
+            if (nameInput) nameInput.value = user.displayName || "";
+            if (emailInput) emailInput.value = user.email || "";
+
+            // 填入本機記憶的電話與地址 (根據 UID 抓取)
+            const saved = localStorage.getItem(`profile_${user.uid}`);
+            if (saved) {
+                const profile = JSON.parse(saved);
+                const phoneInput = document.getElementById("phone");
+                const addrInput = document.getElementById("address");
+                const storeInput = document.getElementById("store-info");
+
+                if (phoneInput) phoneInput.value = profile.phone || "";
+                
+                // 這裡會自動判斷目前是「宅配」還是「超商」，並填入對應格子
+                if (addrInput) addrInput.value = profile.address || "";
+                if (storeInput) storeInput.value = profile.store || "";
+                
+                console.log("✅ 歷史資料填寫完畢");
+            }
         }
-    }
+    }, 200); // 延遲 0.2 秒，這是肉眼看不出來但對程式很重要的緩衝
 }
-
 function closeModal() { document.getElementById("checkout-modal").style.display = "none"; }
 
 // ✨ 修改 2：送出訂單時，順便幫會員記住電話跟地址
@@ -220,12 +238,12 @@ function submitOrder() {
         body: formData, 
         mode: 'no-cors' 
     })
-    .then(() => {
-        // ✨ 新增：訂單成功後，如果是會員，把這次填的電話地址存進電腦
+   .then(() => {
+        // 只有在成功送出訂單後，才把這筆資料存入本機
         const user = window.firebaseAuth?.currentUser;
         if (user) {
             const profile = {
-                phone: phone,
+                phone: document.getElementById("phone")?.value || "",
                 address: document.getElementById("address")?.value || "",
                 store: document.getElementById("store-info")?.value || ""
             };
