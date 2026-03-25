@@ -1,5 +1,5 @@
 // ⚠️ 請確保這段網址是你目前在 Google Apps Script「部署」後得到的最新網址
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz7k-eStIx1cNQ32IrxN4ENg3eVvcTzpJofOntSk4vAgBiApra3fxhYkhtUgAVrMP0J/exec';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzwSBlTem0OOGlxXjaPyjmvh-raqqZtxM0sUNcYpygFCTgSIZH_aYSu0sXzC5GI88YR/exec';
 
 let allProducts = []; 
 let cart = JSON.parse(localStorage.getItem('cherryEasonCart')) || [];
