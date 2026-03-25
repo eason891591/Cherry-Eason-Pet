@@ -165,7 +165,6 @@
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
   import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
-  // 你提供的專案配置
   const firebaseConfig = {
     apiKey: "AIzaSyDf663zw1zdWVCuPkN9hqtIQTE6dI4zaog",
     authDomain: "cherryeason-pet.firebaseapp.com",
@@ -179,8 +178,10 @@
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
   const provider = new GoogleAuthProvider();
+  
+  // ✨ 將 auth 掛載到全域，讓 cart.js 可以隨時讀取
+  window.firebaseAuth = auth;
 
-  // 登入/登出切換邏輯
   window.handleAuth = async () => {
     if (!auth.currentUser) {
       try {
@@ -194,21 +195,16 @@
     }
   };
 
-  // 監聽登入狀態轉變
   onAuthStateChanged(auth, (user) => {
     const infoEl = document.getElementById('user-info');
     const btnEl = document.getElementById('auth-btn');
-    const emailInput = document.getElementById('email');
 
     if (user) {
       infoEl.innerText = `Hi, ${user.displayName || '會員'}`;
       btnEl.innerText = "登出";
-      // ✨ 自動填入 Email 到結帳表單
-      if (emailInput) emailInput.value = user.email; 
     } else {
       infoEl.innerText = "訪客您好";
       btnEl.innerText = "Google 登入";
-      if (emailInput) emailInput.value = "";
     }
   });
 </script>

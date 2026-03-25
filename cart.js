@@ -6,7 +6,6 @@ let cart = JSON.parse(localStorage.getItem('cherryEasonCart')) || [];
 let isSubmitting = false;
 
 window.onload = () => {
-    // 1. 抓取商品清單
     const grid = document.getElementById('product-grid');
     if (grid) grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; padding: 40px;">🐾 正在從雲端載入商品...</p>';
 
@@ -23,20 +22,17 @@ window.onload = () => {
 
     updateCart();
 
-    // 2. 搜尋功能監聽
     document.getElementById('product-search')?.addEventListener('input', (e) => {
         const term = e.target.value.toLowerCase().trim();
         const filtered = allProducts.filter(p => p.name.toLowerCase().includes(term));
         renderProducts(filtered);
     });
 
-    // 3. 結帳欄位聯動 (付款方式)
     document.getElementById('payment-method')?.addEventListener('change', function() {
         const info = document.getElementById('transfer-info');
         if (info) info.style.display = (this.value === '銀行轉帳') ? 'block' : 'none';
     });
 
-    // 4. 結帳欄位聯動 (取貨方式)
     document.getElementById('delivery-method')?.addEventListener('change', function() {
         const addrSec = document.getElementById('address-section');
         const storeSec = document.getElementById('store-section');
@@ -145,19 +141,36 @@ function showToast(msg) {
     setTimeout(() => { t.className = ""; }, 3000);
 }
 
+// ✨ 修改 1：在打開結帳視窗的同時，把資料填進去
 function checkout() {
     if (!cart.length) return alert("購物車是空的喔！");
     toggleCart();
     document.getElementById("checkout-modal").style.display = "flex";
+
+    // 抓取會員狀態並自動填寫
+    const user = window.firebaseAuth?.currentUser;
+    if (user) {
+        // 填入 Google 帳號的姓名與信箱
+        if (document.getElementById("name")) document.getElementById("name").value = user.displayName || "";
+        if (document.getElementById("email")) document.getElementById("email").value = user.email || "";
+
+        // 去電腦記憶體找找看上次有沒有存過電話跟地址
+        const savedProfile = localStorage.getItem(`profile_${user.uid}`);
+        if (savedProfile) {
+            const profile = JSON.parse(savedProfile);
+            if (document.getElementById("phone")) document.getElementById("phone").value = profile.phone || "";
+            if (document.getElementById("address")) document.getElementById("address").value = profile.address || "";
+            if (document.getElementById("store-info")) document.getElementById("store-info").value = profile.store || "";
+        }
+    }
 }
 
 function closeModal() { document.getElementById("checkout-modal").style.display = "none"; }
 
-// 🚀 核心：修改後的送出訂單函式 (含會員支援與安全檢查)
+// ✨ 修改 2：送出訂單時，順便幫會員記住電話跟地址
 function submitOrder() {
     if (isSubmitting) return;
 
-    // --- 1. 抓取欄位 (使用安全讀取方式，防止 null 報錯) ---
     const name = document.getElementById("name")?.value.trim() || "";
     const phone = document.getElementById("phone")?.value.trim() || "";
     const email = document.getElementById("email")?.value.trim() || "";
@@ -165,11 +178,9 @@ function submitOrder() {
     const payment = document.getElementById("payment-method")?.value || "";
     const note = document.getElementById("order-note")?.value.trim() || "";
 
-    // ✨ 新增：嘗試獲取 Firebase 會員 UID (如果有的話)
-    // 這裡我們假設你在 index.html 的 script 裡有將 auth 暴露給 window
+    // 獲取 Firebase 會員 UID
     const memberUid = window.firebaseAuth?.currentUser?.uid || "非會員/訪客";
 
-    // --- 2. 驗證邏輯 ---
     if (!name || !phone) return alert("❌ 請填寫姓名與電話");
     if (!/^09\d{8}$/.test(phone)) return alert("❌ 手機格式錯誤");
     if (!delivery) return alert("❌ 請選擇取貨方式");
@@ -185,7 +196,6 @@ function submitOrder() {
         finalAddress = "【宅配】" + addr;
     }
 
-    // --- 3. 開始傳送狀態 ---
     isSubmitting = true;
     const btn = document.getElementById("submit-btn");
     if (btn) {
@@ -193,7 +203,6 @@ function submitOrder() {
         btn.disabled = true;
     }
 
-    // --- 4. 封裝資料 ---
     const formData = new FormData();
     formData.append("name", name);
     formData.append("phone", phone);
@@ -202,19 +211,29 @@ function submitOrder() {
     formData.append("address", finalAddress);
     formData.append("payment_method", payment);
     formData.append("note", note);
-    formData.append("uid", memberUid); // ✨ 將會員 UID 傳送到 Google Sheets
+    formData.append("uid", memberUid);
     formData.append("order_details", cart.map(item => `${item.name} x ${item.qty}`).join(", "));
     formData.append("total_price", `NT$${cart.reduce((sum, i) => sum + (i.price * i.qty), 0)}`);
 
-    // --- 5. 執行傳送 ---
     fetch(SCRIPT_URL, { 
         method: 'POST', 
         body: formData, 
         mode: 'no-cors' 
     })
     .then(() => {
+        // ✨ 新增：訂單成功後，如果是會員，把這次填的電話地址存進電腦
+        const user = window.firebaseAuth?.currentUser;
+        if (user) {
+            const profile = {
+                phone: phone,
+                address: document.getElementById("address")?.value || "",
+                store: document.getElementById("store-info")?.value || ""
+            };
+            localStorage.setItem(`profile_${user.uid}`, JSON.stringify(profile));
+        }
+
         alert("🎉 訂單成功送出！\n我們將盡快為您處理。");
-        cart = []; // 清空購物車
+        cart = []; 
         saveAndUpdate();
         closeModal();
         document.getElementById('checkout-form')?.reset();
