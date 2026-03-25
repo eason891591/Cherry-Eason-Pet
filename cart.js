@@ -141,51 +141,35 @@ function showToast(msg) {
     setTimeout(() => { t.className = ""; }, 3000);
 }
 
-// ✨ 修改 1：在打開結帳視窗的同時，把資料填進去
+// ✨ 結帳與自動填表
 function checkout() {
     if (!cart.length) return alert("購物車是空的喔！");
-    
-    // 1. 先關閉購物車側欄，打開結帳彈窗
     toggleCart();
     const modal = document.getElementById("checkout-modal");
     if (modal) modal.style.display = "flex";
 
-    // 2. 核心修正：使用 setTimeout 確保格子都「長出來」了才填資料
     setTimeout(() => {
-        // 從 window 抓取 Firebase 登入狀態
         const user = window.firebaseAuth?.currentUser;
-        
         if (user) {
             console.log("📍 偵測到會員，開始自動填寫...");
+            if (document.getElementById("name")) document.getElementById("name").value = user.displayName || "";
+            if (document.getElementById("email")) document.getElementById("email").value = user.email || "";
 
-            // 填入 Google 基本資料 (姓名、Email)
-            const nameInput = document.getElementById("name");
-            const emailInput = document.getElementById("email");
-            if (nameInput) nameInput.value = user.displayName || "";
-            if (emailInput) emailInput.value = user.email || "";
-
-            // 填入本機記憶的電話與地址 (根據 UID 抓取)
             const saved = localStorage.getItem(`profile_${user.uid}`);
             if (saved) {
                 const profile = JSON.parse(saved);
-                const phoneInput = document.getElementById("phone");
-                const addrInput = document.getElementById("address");
-                const storeInput = document.getElementById("store-info");
-
-                if (phoneInput) phoneInput.value = profile.phone || "";
-                
-                // 這裡會自動判斷目前是「宅配」還是「超商」，並填入對應格子
-                if (addrInput) addrInput.value = profile.address || "";
-                if (storeInput) storeInput.value = profile.store || "";
-                
+                if (document.getElementById("phone")) document.getElementById("phone").value = profile.phone || "";
+                if (document.getElementById("address")) document.getElementById("address").value = profile.address || "";
+                if (document.getElementById("store-info")) document.getElementById("store-info").value = profile.store || "";
                 console.log("✅ 歷史資料填寫完畢");
             }
         }
-    }, 200); // 延遲 0.2 秒，這是肉眼看不出來但對程式很重要的緩衝
+    }, 200);
 }
+
 function closeModal() { document.getElementById("checkout-modal").style.display = "none"; }
 
-// ✨ 修改 2：送出訂單時，順便幫會員記住電話跟地址
+// ✨ 方案 A：送出訂單（雙重備份：Sheets + Firestore）
 function submitOrder() {
     if (isSubmitting) return;
 
@@ -195,9 +179,11 @@ function submitOrder() {
     const delivery = document.getElementById("delivery-method")?.value || "";
     const payment = document.getElementById("payment-method")?.value || "";
     const note = document.getElementById("order-note")?.value.trim() || "";
+    const total_sum = cart.reduce((sum, i) => sum + (i.price * i.qty), 0);
+    const order_details_text = cart.map(item => `${item.name} x ${item.qty}`).join(", ");
 
-    // 獲取 Firebase 會員 UID
-    const memberUid = window.firebaseAuth?.currentUser?.uid || "非會員/訪客";
+    const user = window.firebaseAuth?.currentUser;
+    const memberUid = user?.uid || "訪客";
 
     if (!name || !phone) return alert("❌ 請填寫姓名與電話");
     if (!/^09\d{8}$/.test(phone)) return alert("❌ 手機格式錯誤");
@@ -221,6 +207,7 @@ function submitOrder() {
         btn.disabled = true;
     }
 
+    // 1. 準備 Google Sheets 資料
     const formData = new FormData();
     formData.append("name", name);
     formData.append("phone", phone);
@@ -230,17 +217,29 @@ function submitOrder() {
     formData.append("payment_method", payment);
     formData.append("note", note);
     formData.append("uid", memberUid);
-    formData.append("order_details", cart.map(item => `${item.name} x ${item.qty}`).join(", "));
-    formData.append("total_price", `NT$${cart.reduce((sum, i) => sum + (i.price * i.qty), 0)}`);
+    formData.append("order_details", order_details_text);
+    formData.append("total_price", `NT$${total_sum}`);
 
-    fetch(SCRIPT_URL, { 
-        method: 'POST', 
-        body: formData, 
-        mode: 'no-cors' 
-    })
-   .then(() => {
-        // 只有在成功送出訂單後，才把這筆資料存入本機
-        const user = window.firebaseAuth?.currentUser;
+    // 同步執行：發送到 Google Sheets 並同步寫入 Firestore
+    Promise.all([
+        // A. 發送到 Google Sheets
+        fetch(SCRIPT_URL, { method: 'POST', body: formData, mode: 'no-cors' }),
+
+        // B. 如果是會員，寫入 Firestore 備份
+        (user ? window.db.collection("orders").add({
+            userId: user.uid,
+            userName: name,
+            userEmail: email,
+            details: order_details_text,
+            total: `NT$${total_sum}`,
+            address: finalAddress,
+            method: delivery,
+            status: "pending",
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        }) : Promise.resolve())
+    ])
+    .then(() => {
+        // 成功後記憶使用者資訊
         if (user) {
             const profile = {
                 phone: document.getElementById("phone")?.value || "",
@@ -257,8 +256,8 @@ function submitOrder() {
         document.getElementById('checkout-form')?.reset();
     })
     .catch(err => {
-        console.error("傳送失敗:", err);
-        alert("❌ 訂單傳送失敗，請檢查網路連線");
+        console.error("訂單處理失敗:", err);
+        alert("❌ 訂單處理失敗，請檢查網路連線");
     })
     .finally(() => {
         isSubmitting = false;
