@@ -14,26 +14,18 @@ body { font-family: 'Segoe UI', Arial, sans-serif; margin:0; padding-top:180px; 
 }
 .header-top { width:90%; display:flex; justify-content:center; position:relative; }
 .logo { font-size:26px; font-weight:bold; color: #5C3A00; }
-.cart-icon { position:absolute; right:20px; top:50%; transform:translateY(-50%); cursor:pointer; font-size: 22px; }
+
 /* --- 修正購物車圖示與數字擁擠 --- */
-.cart-icon {
-    display: flex !important;
-    align-items: center !important;
-    gap: 5px !important; /* 在圖示與數字之間增加 5px 的間隙 */
+.cart-icon { 
+    position:absolute; right:20px; top:50%; transform:translateY(-50%); cursor:pointer; font-size: 22px; 
+    display: flex !important; align-items: center !important; gap: 5px !important; 
 }
-
 #cart-count {
-    background: #5C3A00; /* 深色背景讓數字更明顯 */
-    color: white;
-    font-size: 12px;
-    padding: 2px 6px;
-    border-radius: 10px; /* 變成小膠囊狀 */
-    min-width: 15px;
-    text-align: center;
-    font-weight: bold;
+    background: #5C3A00; color: white; font-size: 12px; padding: 2px 6px; 
+    border-radius: 10px; min-width: 15px; text-align: center; font-weight: bold;
 }
 
-.nav { margin:10px 0; display:flex; gap:20px; position: relative; }
+.nav { margin:10px 0; display:flex; gap:20px; position: relative; align-items: center; }
 .nav a { 
     color:#5C3A00; text-decoration:none; font-weight:bold; position: relative !important; 
     padding: 8px 15px !important; transition: color 0.3s ease !important; font-size: 16px !important;
@@ -46,51 +38,27 @@ body { font-family: 'Segoe UI', Arial, sans-serif; margin:0; padding-top:180px; 
 
 /* --- 下拉選單：緊貼優化區 --- */
 .dropdown { 
-    display: inline-flex !important; 
-    align-items: center !important; 
-    position: relative !important; 
-    padding-bottom: 5px; 
-    margin-bottom: -5px; 
+    display: inline-flex !important; align-items: center !important; 
+    position: relative !important; padding-bottom: 5px; margin-bottom: -5px; 
 }
-
 .dropdown-content { 
-    display:none; 
-    position:absolute; 
-    background:white; 
-    min-width:180px; 
-    box-shadow:0 10px 30px rgba(92, 58, 0, 0.15) !important; 
-    border-radius: 12px !important; 
-    overflow: hidden; 
-    top: 100% !important; 
-    left: 50% !important;
-    transform: translateX(-50%) !important; 
-    margin-top: 0px !important; 
-    padding: 8px 0 !important;
-    z-index: 10000 !important;
-    border: 1px solid rgba(255, 210, 127, 0.3); 
+    display:none; position:absolute; background:white; min-width:180px; 
+    box-shadow:0 10px 30px rgba(92, 58, 0, 0.15) !important; border-radius: 12px !important; 
+    overflow: hidden; top: 100% !important; left: 50% !important;
+    transform: translateX(-50%) !important; margin-top: 0px !important; padding: 8px 0 !important;
+    z-index: 10000 !important; border: 1px solid rgba(255, 210, 127, 0.3); 
 }
-
-.dropdown:hover .dropdown-content { 
-    display:flex !important; 
-    flex-direction: column !important; 
-}
-
+.dropdown:hover .dropdown-content { display:flex !important; flex-direction: column !important; }
 .dropdown-content a { 
     display:flex; align-items:center; gap:8px; color:#B35400; 
     padding:12px 20px !important; text-decoration:none; 
     transition: all 0.2s ease !important; border-bottom: 1px solid #fffaf0 !important;
-    white-space: nowrap;
-    font-size: 15px !important;
+    white-space: nowrap; font-size: 15px !important;
 }
-
 .dropdown-content a:last-child { border-bottom: none !important; }
 .dropdown-content a::after { display: none !important; }
-
-.dropdown-content a:hover { 
-    background: #FFF5E6 !important; 
-    padding-left: 28px !important; 
-    color: #FF4500 !important; 
-}
+.dropdown-content a:hover { background: #FFF5E6 !important; padding-left: 28px !important; color: #FF4500 !important; }
+.dropdown-content hr { border: 0; border-top: 1px solid #f1f1f1; margin: 5px 0; }
 
 /* --- Search Bar --- */
 .search-bar { width: 100%; display: flex; justify-content: center; padding-bottom: 10px; margin-top: 5px !important;}
@@ -149,183 +117,85 @@ footer a { color: white !important; text-decoration: none !important; display: f
 
 /* --- 回到最上層浮動按鈕 --- */
 #back-to-top {
-    position: fixed;
-    bottom: 30px;
-    right: 30px;
-    background: #FFD27F;
-    color: #5C3A00;
-    width: 50px;
-    height: 50px;
-    border-radius: 50%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-size: 24px;
-    text-decoration: none;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
-    z-index: 9998; 
-    opacity: 0;
-    visibility: hidden;
-    transition: all 0.3s ease;
+    position: fixed; bottom: 30px; right: 30px; background: #FFD27F; color: #5C3A00; 
+    width: 50px; height: 50px; border-radius: 50%; display: flex; justify-content: center; 
+    align-items: center; font-size: 24px; text-decoration: none; box-shadow: 0 4px 10px rgba(0,0,0,0.15); 
+    z-index: 9998; opacity: 0; visibility: hidden; transition: all 0.3s ease;
 }
-#back-to-top.show {
-    opacity: 1;
-    visibility: visible;
+#back-to-top.show { opacity: 1; visibility: visible; }
+#back-to-top:hover { transform: translateY(-5px); background: #FFC966; }
+
+/* --- 結帳面板 (跑掉修正區) --- */
+#checkout-modal {
+    background: rgba(0, 0, 0, 0.8) !important;
+    backdrop-filter: blur(5px) !important;
+    z-index: 25000 !important; /* 確保在購物車之上 */
 }
-#back-to-top:hover {
-    transform: translateY(-5px);
-    background: #FFC966;
+#checkout-modal > div {
+    background: white !important; padding: 30px !important; border-radius: 20px !important;
+    max-width: 480px !important; box-shadow: 0 15px 50px rgba(92, 58, 0, 0.3) !important;
+}
+#checkout-form input, #checkout-form select, #checkout-form textarea {
+    width: 100% !important; padding: 12px !important; border: 1px solid #ddd !important;
+    border-radius: 10px !important; margin-bottom: 15px !important; font-size: 16px !important;
+    background: #fff !important; box-sizing: border-box !important;
 }
 
-/* Mobile Adaptability */
-/* --- 手機版最終優化方案：一排兩個商品 --- */
-@media (max-width: 480px) {/* --- 輔助區塊瘦身 (Hero, About, Footer) --- */
-
-    /* 1. 縮減 Hero 歡迎區：減少上下留白，縮小文字 */
-    .hero {
-        padding: 30px 15px !important; /* 原本可能是 120px，手機版縮到 30px */
-        margin-bottom: 10px !important;
-        min-height: auto !important; /* 取消最小高度限制 */
-    }
-    .hero h1 {
-        font-size: 1.5rem !important; /* 標題縮小 */
-        margin-bottom: 5px !important;
-    }
-    .hero p {
-        font-size: 0.9rem !important;
-        margin-top: 0 !important;
-    }
-
-    /* 2. 縮減 About 品牌故事：讓它看起來像個精緻的小簡介 */
-    .about {
-        padding: 30px 20px !important;
-    }
-    .about-content h2 {
-        font-size: 1.4rem !important;
-        margin-bottom: 15px !important;
-    }
-    .about-content p {
-        font-size: 0.95rem !important;
-        line-height: 1.6 !important;
-    }
-
-    /* 3. 縮減 Footer 頁尾：減少間距，讓聯絡資訊更緊湊 */
-    footer {
-        padding: 30px 20px !important;
-    }
-    footer h3 {
-        font-size: 1.2rem !important;
-        margin-bottom: 15px !important;
-    }
-    .footer-info p {
-        margin: 5px 0 !important;
-        font-size: 0.9rem !important;
-    }
-    .social-links {
-        margin-top: 15px !important;
-    }
-
-    /* 4. 調整回到最上層按鈕：手機版可以稍微縮小，避免擋住商品 */
-    #back-to-top {
-        width: 40px !important;
-        height: 40px !important;
-        bottom: 20px !important;
-        right: 20px !important;
-        font-size: 20px !important;
-    }
-    /* 1. 調整 Body 頂部間距，避免被導覽列遮擋 */
-    body { 
-        padding-top: 200px !important; 
-    }
-
-    /* 2. 解決導覽列擠在一起：允許換行並調整間距 */
-    .nav {
-        flex-wrap: wrap; /* 空間不足時自動換行 */
-        justify-content: center;
-        gap: 8px 12px !important;
-        margin: 5px 0 !important;
-    }
-
-    .nav a {
-        font-size: 14px !important;
-        padding: 4px 8px !important;
-    }
-
-    /* 3. 商品網格：設定為一排兩個 */
-    .product-grid {
-        display: flex !important;
-        flex-wrap: wrap !important;
-        justify-content: space-between !important;
-        padding: 10px !important;
-        gap: 10px !important;
-    }
-
-    /* 4. 商品卡片縮放：寬度約為 48% 以確保一排兩個並留有間隙 */
-    .product {
-        width: calc(50% - 15px) !important; 
-        margin: 0 !important;
-        padding: 10px !important;
-        box-sizing: border-box;
-    }
-
-    .product img {
-        height: 120px !important; /* 縮小手機版的圖片高度 */
-        object-fit: cover;
-    }
-
-    .product h3 {
-        font-size: 0.95rem !important; /* 縮小標題字體 */
-        margin: 8px 0 !important;
-        height: 2.8em; /* 固定高度防止因字數不同導致卡片長短不一 */
-        overflow: hidden;
-    }
-
-    .product p {
-        font-size: 0.9rem !important;
-    }
-
-    .product button {
-        padding: 8px 5px !important;
-        font-size: 0.85rem !important;
-    }
-
-    /* 5. 側邊欄全螢幕 */
-    #cart-sidebar.cart-panel { 
-        width: 100% !important; 
-        right: -100% !important; 
-    }
-    
-    #cart-sidebar.cart-panel.open { 
-        right: 0 !important; 
-    }
-}
-
+/* --- Toast 提示 --- */
 #toast {
-    visibility: hidden;
-    min-width: 250px;
-    background-color: #5C3A00;
-    color: #fff;
-    text-align: center;
-    border-radius: 50px;
-    padding: 16px;
-    position: fixed;
-    z-index: 30000;
-    left: 50%;
-    bottom: 30px;
-    transform: translateX(-50%);
-    font-weight: bold;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    visibility: hidden; min-width: 250px; background-color: #5C3A00; color: #fff; text-align: center; 
+    border-radius: 50px; padding: 16px; position: fixed; z-index: 30000; left: 50%; bottom: 30px; 
+    transform: translateX(-50%); font-weight: bold; box-shadow: 0 4px 15px rgba(0,0,0,0.2);
 }
-#toast.show {
-    visibility: visible;
-    animation: fadein 0.5s, fadeout 0.5s 2.5s;
-}
+#toast.show { visibility: visible; animation: fadein 0.5s, fadeout 0.5s 2.5s; }
 @keyframes fadein { from { bottom: 0; opacity: 0; } to { bottom: 30px; opacity: 1; } }
 @keyframes fadeout { from { bottom: 30px; opacity: 1; } to { bottom: 0; opacity: 0; } }
 
-/* 下拉選單內的分隔線樣式 */
-.dropdown-content hr {
-    border: 0;
-    border-top: 1px solid #f1f1f1;
-    margin: 5px 0;
+/* Mobile Adaptability */
+/* --- 手機版最終優化方案：一排兩個商品 --- */
+@media (max-width: 480px) {
+    /* --- 輔助區塊瘦身 (Hero, About, Footer) --- */
+
+    /* 1. 縮減 Hero 歡迎區：減少上下留白，縮小文字 */
+    .hero { padding: 30px 15px !important; margin-bottom: 10px !important; min-height: auto !important; }
+    .hero h1 { font-size: 1.5rem !important; margin-bottom: 5px !important; }
+    .hero p { font-size: 0.9rem !important; margin-top: 0 !important; }
+
+    /* 2. 縮減 About 品牌故事：讓它看起來像個精緻的小簡介 */
+    .about { padding: 30px 20px !important; }
+    .about-content h2 { font-size: 1.4rem !important; margin-bottom: 15px !important; }
+    .about-content p { font-size: 0.95rem !important; line-height: 1.6 !important; }
+
+    /* 3. 縮減 Footer 頁尾：減少間距，讓聯絡資訊更緊湊 */
+    footer { padding: 30px 20px !important; }
+    footer h3 { font-size: 1.2rem !important; margin-bottom: 15px !important; }
+    .footer-info p { margin: 5px 0 !important; font-size: 0.9rem !important; }
+    .social-links { margin-top: 15px !important; }
+
+    /* 4. 調整回到最上層按鈕：手機版可以稍微縮小，避免擋住商品 */
+    #back-to-top { width: 40px !important; height: 40px !important; bottom: 20px !important; right: 20px !important; font-size: 20px !important; }
+    
+    /* 1. 調整 Body 頂部間距，避免被導覽列遮擋 */
+    body { padding-top: 200px !important; }
+
+    /* 2. 解決導覽列擠在一起：允許換行並調整間距 */
+    .nav { flex-wrap: wrap; justify-content: center; gap: 8px 12px !important; margin: 5px 0 !important; }
+    .nav a { font-size: 14px !important; padding: 4px 8px !important; }
+
+    /* 3. 商品網格：設定為一排兩個 */
+    .product-grid { display: flex !important; flex-wrap: wrap !important; justify-content: space-between !important; padding: 10px !important; gap: 10px !important; }
+
+    /* 4. 商品卡片縮放：寬度約為 48% 以確保一排兩個並留有間隙 */
+    .product { width: calc(50% - 15px) !important; margin: 0 !important; padding: 10px !important; box-sizing: border-box; }
+    .product img { height: 120px !important; object-fit: cover; }
+    .product h3 { font-size: 0.95rem !important; margin: 8px 0 !important; height: 2.8em; overflow: hidden; }
+    .product p { font-size: 0.9rem !important; }
+    .product button { padding: 8px 5px !important; font-size: 0.85rem !important; }
+
+    /* 5. 側邊欄全螢幕 */
+    #cart-sidebar.cart-panel { width: 100% !important; right: -100% !important; }
+    #cart-sidebar.cart-panel.open { right: 0 !important; }
+    
+    /* 6. 結帳面板手機版自適應高度 */
+    #checkout-modal > div { width: 95% !important; padding: 20px !important; max-height: 90vh !important; }
 }
