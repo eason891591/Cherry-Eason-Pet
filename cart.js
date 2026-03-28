@@ -1,5 +1,5 @@
 // ⚠️ 請確保這段網址是你目前在 Google Apps Script「部署」後得到的最新網址
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz7k-eStIx1cNQ32IrxN4ENg3eVvcTzpJofOntSk4vAgBiApra3fxhYkhtUgAVrMP0J/exec';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbydSZYr9RPcCN1PIRtzAvbddW1KOUYET7iWsNhll05L2-TpH5ZEHIqqa4o1fP8A7Zwx/exec';
 
 let allProducts = []; 
 let cart = JSON.parse(localStorage.getItem('cherryEasonCart')) || [];
@@ -175,7 +175,11 @@ function closeModal() { document.getElementById("checkout-modal").style.display 
 function submitOrder() {
     if (isSubmitting) return;
 
-    // 抓取欄位
+    // 1. 宣告 user (只在開頭宣告這一次！)
+    const user = window.firebaseAuth?.currentUser;
+    const memberUid = user?.uid || "訪客";
+
+    // 2. 抓取欄位
     const name = document.getElementById("name").value.trim();
     const phone = document.getElementById("phone").value.trim();
     const email = document.getElementById("email").value.trim();
@@ -185,10 +189,7 @@ function submitOrder() {
     const total_sum = cart.reduce((sum, i) => sum + (i.price * i.qty), 0);
     const order_details_text = cart.map(item => `${item.name} x ${item.qty}`).join(", ");
 
-    const user = window.firebaseAuth?.currentUser;
-    const memberUid = user?.uid || "訪客";
-
-    // 驗證
+    // 3. 驗證
     if (!name || !phone) return alert("❌ 請填寫姓名與電話");
     if (!/^09\d{8}$/.test(phone)) return alert("❌ 手機格式錯誤");
     if (!delivery) return alert("❌ 請選擇取貨方式");
@@ -210,20 +211,22 @@ function submitOrder() {
     btn.innerText = "🚀 訂單傳送中...";
     btn.disabled = true;
 
-    // 準備發送到 Google Sheets 的資料
-    const formData = new FormData();
-    formData.append("name", name);
-    formData.append("phone", phone);
-    formData.append("email", email);
-    formData.append("delivery_method", delivery);
-    formData.append("address", finalAddress);
-    formData.append("payment_method", payment);
-    formData.append("note", note);
-    formData.append("uid", memberUid);
-    formData.append("order_details", order_details_text);
-    formData.append("total_price", `NT$${total_sum}`);
+    // 4. 準備發送到 Google Sheets 的資料 (改用 URLSearchParams 確保 e.parameter 能正確解析)
+    const searchParams = new URLSearchParams();
+    searchParams.append("name", name);
+    searchParams.append("phone", phone);
+    searchParams.append("email", email);
+    searchParams.append("delivery_method", delivery);
+    searchParams.append("address", finalAddress);
+    searchParams.append("payment_method", payment);
+    searchParams.append("note", note);
+    searchParams.append("uid", memberUid); // ✨ 這裡會正確傳送 UID
+    searchParams.append("order_details", order_details_text);
+    searchParams.append("total_price", `NT$${total_sum}`);
 
-    // ✨ 準備寫入 Firestore (若為登入會員)
+    console.log("準備傳送的 UID:", memberUid); // 測試用：請在 F12 Console 檢查
+
+    // 5. 準備寫入 Firestore
     let firestorePromise = Promise.resolve();
     if (user && window.db && window.firestoreTools) {
         firestorePromise = window.firestoreTools.addDoc(window.firestoreTools.collection(window.db, "orders"), {
@@ -240,9 +243,14 @@ function submitOrder() {
         });
     }
 
-    // 同步執行雙重備份
+    // 6. 同步執行雙重備份
     Promise.all([
-        fetch(SCRIPT_URL, { method: 'POST', body: formData, mode: 'no-cors' }),
+        fetch(SCRIPT_URL, { 
+            method: 'POST', 
+            body: searchParams.toString(), 
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            mode: 'no-cors' 
+        }),
         firestorePromise
     ])
     .then(() => {
@@ -261,11 +269,11 @@ function submitOrder() {
         saveAndUpdate();
         closeModal();
         document.getElementById('checkout-form').reset();
-        window.location.reload(); // 強制刷新確保購物車狀態清空
+        window.location.reload(); 
     })
     .catch(err => {
         console.error("傳送失敗:", err);
-        alert("❌ 訂單傳送失敗，請檢查網路連線");
+        alert("❌ 訂單傳送失敗，請檢查網路狀態");
     })
     .finally(() => {
         isSubmitting = false;
