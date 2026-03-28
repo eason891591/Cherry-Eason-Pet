@@ -6,7 +6,6 @@ let cart = JSON.parse(localStorage.getItem('cherryEasonCart')) || [];
 let isSubmitting = false;
 
 window.onload = () => {
-    // 1. 從 GAS 抓取商品清單 (GET)
     const grid = document.getElementById('product-grid');
     if (grid) grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; padding: 40px;">🐾 正在從雲端載入商品...</p>';
 
@@ -18,25 +17,22 @@ window.onload = () => {
         })
         .catch(err => {
             console.error("商品載入失敗:", err);
-            if (grid) grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: red; padding: 40px;">❌ 商品載入失敗，請檢查 Script URL</p>';
+            if (grid) grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: red; padding: 40px;">❌ 商品載入失敗</p>';
         });
 
     updateCart();
 
-    // 2. 搜尋功能
     document.getElementById('product-search')?.addEventListener('input', (e) => {
         const term = e.target.value.toLowerCase().trim();
         const filtered = allProducts.filter(p => p.name.toLowerCase().includes(term));
         renderProducts(filtered);
     });
 
-    // 3. 結帳欄位聯動 (付款方式)
     document.getElementById('payment-method')?.addEventListener('change', function() {
         const info = document.getElementById('transfer-info');
         if (info) info.style.display = (this.value === '銀行轉帳') ? 'block' : 'none';
     });
 
-    // 4. 結帳欄位聯動 (取貨方式)
     document.getElementById('delivery-method')?.addEventListener('change', function() {
         const addrSec = document.getElementById('address-section');
         const storeSec = document.getElementById('store-section');
@@ -50,6 +46,7 @@ window.onload = () => {
     });
 };
 
+// ✨ 修改：渲染商品卡片（加入對齊用的佔位符）
 function renderProducts(products) {
     const grid = document.getElementById('product-grid');
     if (!grid) return;
@@ -57,27 +54,46 @@ function renderProducts(products) {
         grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; padding: 40px;">🔍 找不到相關商品</p>';
         return;
     }
-    grid.innerHTML = products.map(p => `
-        <div class="product">
-            <img src="${p.img || ''}" alt="${p.name}">
-            <h3>${p.name}</h3>
-            <p style="color: #FF4500; font-weight: bold;">NT$${p.price}</p>
-            <button onclick="addToCart('${p.name}', ${p.price})">加入購物車</button>
-        </div>
-    `).join('');
+
+    grid.innerHTML = products.map(p => {
+        const variants = p.variants ? p.variants.split(',').map(v => v.trim()) : [];
+        // ✨ 如果沒有規格，補一個隱形的 div 佔位 (高度 40px + margin 20px = 60px)
+        const variantHtml = variants.length > 0 ? `
+            <select id="variant-${p.name.replace(/\s+/g, '-')}" class="variant-select">
+                ${variants.map(v => `<option value="${v}">${v}</option>`).join('')}
+            </select>
+        ` : '<div style="height: 60px;"></div>'; 
+
+        return `
+            <div class="product">
+                <div class="product-top">
+                    <img src="${p.img || ''}" alt="${p.name}">
+                    <h3>${p.name}</h3>
+                </div>
+                <div class="product-bottom">
+                    ${variantHtml}
+                    <p class="product-price">NT$${p.price}</p>
+                    <button onclick="addToCartWithVariant('${p.name}', ${p.price})">加入購物車</button>
+                </div>
+            </div>
+        `;
+    }).join('');
 }
 
-function filterProducts(category) {
-    const filtered = (category === 'all') ? allProducts : allProducts.filter(p => p.category === category);
-    renderProducts(filtered);
-    document.getElementById('shop')?.scrollIntoView({ behavior: 'smooth' });
-}
-
-function addToCart(name, price) {
-    let item = cart.find(i => i.name === name);
-    item ? item.qty++ : cart.push({ name, price, qty: 1 });
+function addToCartWithVariant(name, price) {
+    const variantEl = document.getElementById(`variant-${name.replace(/\s+/g, '-')}`);
+    const selectedVariant = variantEl ? variantEl.value : "";
+    const cartId = selectedVariant ? `${name} (${selectedVariant})` : name;
+    
+    let item = cart.find(i => i.cartId === cartId);
+    if (item) {
+        item.qty++;
+    } else {
+        cart.push({ cartId, name, variant: selectedVariant, price, qty: 1 });
+    }
+    
     saveAndUpdate();
-    showToast(`✅ ${name} 已加入！`);
+    showToast(`✅ ${cartId} 已加入！`);
 }
 
 function updateCart() {
@@ -90,7 +106,11 @@ function updateCart() {
 
     let itemsHtml = cart.map((item, index) => `
         <div class="cart-item" style="display:flex; justify-content:space-between; margin-bottom:15px; align-items:center; border-bottom:1px solid #eee; padding-bottom:10px;">
-            <div style="flex:1;"><b>${item.name}</b><br><small>NT$${item.price}</small></div>
+            <div style="flex:1;">
+                <b>${item.name}</b><br>
+                ${item.variant ? `<small style="color:#888;">規格: ${item.variant}</small><br>` : ''}
+                <small>NT$${item.price}</small>
+            </div>
             <div class="qty-control">
                 <button type="button" onclick="changeQty(${index}, -1)">-</button>
                 <span style="margin:0 10px;">${item.qty}</span>
@@ -111,6 +131,12 @@ function updateCart() {
         </div>
     `;
     if (countEl) countEl.innerText = qtyTotal;
+}
+
+function filterProducts(category) {
+    const filtered = (category === 'all') ? allProducts : allProducts.filter(p => p.category === category);
+    renderProducts(filtered);
+    document.getElementById('shop')?.scrollIntoView({ behavior: 'smooth' });
 }
 
 function changeQty(index, d) {
@@ -151,11 +177,11 @@ function checkout() {
     document.getElementById("checkout-modal").style.display = "flex";
 
     setTimeout(() => {
-        const user = window.firebaseAuth?.currentUser;
-        if (user) {
-            if (document.getElementById("name")) document.getElementById("name").value = user.displayName || "";
-            if (document.getElementById("email")) document.getElementById("email").value = user.email || "";
-            const saved = localStorage.getItem(`profile_${user.uid}`);
+        const orderUser = window.firebaseAuth?.currentUser; // ✨ 修正變數名
+        if (orderUser) {
+            if (document.getElementById("name")) document.getElementById("name").value = orderUser.displayName || "";
+            if (document.getElementById("email")) document.getElementById("email").value = orderUser.email || "";
+            const saved = localStorage.getItem(`profile_${orderUser.uid}`);
             if (saved) {
                 const profile = JSON.parse(saved);
                 if (document.getElementById("phone")) document.getElementById("phone").value = profile.phone || "";
@@ -168,12 +194,11 @@ function checkout() {
 
 function closeModal() { document.getElementById("checkout-modal").style.display = "none"; }
 
-// 🚀 核心：傳送訂單到 GAS + Firestore
 function submitOrder() {
     if (isSubmitting) return;
 
-    const user = window.firebaseAuth?.currentUser;
-    const memberUid = user ? user.uid : "訪客";
+    const orderUser = window.firebaseAuth?.currentUser; // ✨ 修正變數名
+    const memberUid = orderUser ? orderUser.uid : "訪客";
 
     const name = document.getElementById("name").value.trim();
     const phone = document.getElementById("phone").value.trim();
@@ -182,7 +207,10 @@ function submitOrder() {
     const payment = document.getElementById("payment-method").value;
     const note = document.getElementById("order-note").value.trim();
     const total_sum = cart.reduce((sum, i) => sum + (i.price * i.qty), 0);
-    const order_details_text = cart.map(item => `${item.name} x ${item.qty}`).join(", ");
+    
+    const order_details_text = cart.map(item => {
+        return item.variant ? `${item.name}(${item.variant}) x ${item.qty}` : `${item.name} x ${item.qty}`;
+    }).join(", ");
 
     if (!name || !phone) return alert("❌ 請填寫姓名與電話");
     if (!/^09\d{8}$/.test(phone)) return alert("❌ 手機格式錯誤");
@@ -199,7 +227,6 @@ function submitOrder() {
     btn.innerText = "🚀 訂單傳送中...";
     btn.disabled = true;
 
-    // ✨ 封裝 GAS 需要的資料
     const params = new URLSearchParams();
     params.append("name", name);
     params.append("phone", phone);
@@ -208,16 +235,14 @@ function submitOrder() {
     params.append("address", finalAddress);
     params.append("payment_method", payment);
     params.append("note", note);
-    params.append("uid", memberUid); // 👈 確認 UID 有被加入
+    params.append("uid", memberUid);
     params.append("order_details", order_details_text);
     params.append("total_price", `NT$${total_sum}`);
 
-    console.log("正在發送到 GAS, UID 為:", memberUid);
-
     let firestorePromise = Promise.resolve();
-    if (user && window.db && window.firestoreTools) {
+    if (orderUser && window.db && window.firestoreTools) {
         firestorePromise = window.firestoreTools.addDoc(window.firestoreTools.collection(window.db, "orders"), {
-            userId: user.uid,
+            userId: orderUser.uid,
             userName: name,
             userEmail: email,
             details: order_details_text,
@@ -240,15 +265,15 @@ function submitOrder() {
         firestorePromise
     ])
     .then(() => {
-        if (user) {
+        if (orderUser) {
             const profile = {
                 phone: phone,
                 address: (delivery !== '超商取貨') ? document.getElementById("address").value : "",
                 store: (delivery === '超商取貨') ? document.getElementById("store-info").value : ""
             };
-            localStorage.setItem(`profile_${user.uid}`, JSON.stringify(profile));
+            localStorage.setItem(`profile_${orderUser.uid}`, JSON.stringify(profile));
         }
-        alert("🎉 訂單成功送出！\n我們將盡快為您處理。");
+        alert("🎉 訂單成功送出！");
         cart = [];
         saveAndUpdate();
         closeModal();
@@ -257,7 +282,7 @@ function submitOrder() {
     })
     .catch(err => {
         console.error("傳送失敗:", err);
-        alert("❌ 訂單傳送失敗，請檢查網路狀態");
+        alert("❌ 訂單傳送失敗");
     })
     .finally(() => {
         isSubmitting = false;
