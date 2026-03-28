@@ -1,4 +1,4 @@
-// ⚠️ 請確保這段網址是你目前在 Google Apps Script「部署」後得到的最新網址
+// ⚠️ 請務必確認這段網址與你 Google Apps Script 部署後的「網頁應用程式網址」完全一致
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbydSZYr9RPcCN1PIRtzAvbddW1KOUYET7iWsNhll05L2-TpH5ZEHIqqa4o1fP8A7Zwx/exec';
 
 let allProducts = []; 
@@ -6,7 +6,7 @@ let cart = JSON.parse(localStorage.getItem('cherryEasonCart')) || [];
 let isSubmitting = false;
 
 window.onload = () => {
-    // 1. 抓取商品清單
+    // 1. 從 GAS 抓取商品清單 (GET)
     const grid = document.getElementById('product-grid');
     if (grid) grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; padding: 40px;">🐾 正在從雲端載入商品...</p>';
 
@@ -17,13 +17,13 @@ window.onload = () => {
             renderProducts(allProducts);
         })
         .catch(err => {
-            console.error("抓取失敗:", err);
+            console.error("商品載入失敗:", err);
             if (grid) grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: red; padding: 40px;">❌ 商品載入失敗，請檢查 Script URL</p>';
         });
 
     updateCart();
 
-    // 2. 搜尋功能監聽
+    // 2. 搜尋功能
     document.getElementById('product-search')?.addEventListener('input', (e) => {
         const term = e.target.value.toLowerCase().trim();
         const filtered = allProducts.filter(p => p.name.toLowerCase().includes(term));
@@ -145,19 +145,16 @@ function showToast(msg) {
     setTimeout(() => { t.className = ""; }, 3000);
 }
 
-// ✨ 開啟結帳面板並自動帶入會員資料
 function checkout() {
     if (!cart.length) return alert("購物車是空的喔！");
     toggleCart();
     document.getElementById("checkout-modal").style.display = "flex";
 
-    // 延遲抓取確保 DOM 已載入
     setTimeout(() => {
         const user = window.firebaseAuth?.currentUser;
         if (user) {
             if (document.getElementById("name")) document.getElementById("name").value = user.displayName || "";
             if (document.getElementById("email")) document.getElementById("email").value = user.email || "";
-
             const saved = localStorage.getItem(`profile_${user.uid}`);
             if (saved) {
                 const profile = JSON.parse(saved);
@@ -171,15 +168,13 @@ function checkout() {
 
 function closeModal() { document.getElementById("checkout-modal").style.display = "none"; }
 
-// 🚀 核心：雙重備份送出訂單
+// 🚀 核心：傳送訂單到 GAS + Firestore
 function submitOrder() {
     if (isSubmitting) return;
 
-    // 1. 宣告 user (只在開頭宣告這一次！)
     const user = window.firebaseAuth?.currentUser;
-    const memberUid = user?.uid || "訪客";
+    const memberUid = user ? user.uid : "訪客";
 
-    // 2. 抓取欄位
     const name = document.getElementById("name").value.trim();
     const phone = document.getElementById("phone").value.trim();
     const email = document.getElementById("email").value.trim();
@@ -189,21 +184,14 @@ function submitOrder() {
     const total_sum = cart.reduce((sum, i) => sum + (i.price * i.qty), 0);
     const order_details_text = cart.map(item => `${item.name} x ${item.qty}`).join(", ");
 
-    // 3. 驗證
     if (!name || !phone) return alert("❌ 請填寫姓名與電話");
     if (!/^09\d{8}$/.test(phone)) return alert("❌ 手機格式錯誤");
-    if (!delivery) return alert("❌ 請選擇取貨方式");
-    if (!payment) return alert("❌ 請選擇付款方式");
 
     let finalAddress = "";
     if (delivery === '超商取貨') {
-        const store = document.getElementById("store-info").value.trim();
-        if (store.length < 2) return alert("❌ 請填寫完整的超商門市名稱");
-        finalAddress = "【超商】" + store;
+        finalAddress = "【超商】" + document.getElementById("store-info").value.trim();
     } else {
-        const addr = document.getElementById("address").value.trim();
-        if (addr.length < 5) return alert("❌ 請填寫完整的收件地址");
-        finalAddress = "【宅配】" + addr;
+        finalAddress = "【宅配】" + document.getElementById("address").value.trim();
     }
 
     isSubmitting = true;
@@ -211,22 +199,21 @@ function submitOrder() {
     btn.innerText = "🚀 訂單傳送中...";
     btn.disabled = true;
 
-    // 4. 準備發送到 Google Sheets 的資料 (改用 URLSearchParams 確保 e.parameter 能正確解析)
-    const searchParams = new URLSearchParams();
-    searchParams.append("name", name);
-    searchParams.append("phone", phone);
-    searchParams.append("email", email);
-    searchParams.append("delivery_method", delivery);
-    searchParams.append("address", finalAddress);
-    searchParams.append("payment_method", payment);
-    searchParams.append("note", note);
-    searchParams.append("uid", memberUid); // ✨ 這裡會正確傳送 UID
-    searchParams.append("order_details", order_details_text);
-    searchParams.append("total_price", `NT$${total_sum}`);
+    // ✨ 封裝 GAS 需要的資料
+    const params = new URLSearchParams();
+    params.append("name", name);
+    params.append("phone", phone);
+    params.append("email", email);
+    params.append("delivery_method", delivery);
+    params.append("address", finalAddress);
+    params.append("payment_method", payment);
+    params.append("note", note);
+    params.append("uid", memberUid); // 👈 確認 UID 有被加入
+    params.append("order_details", order_details_text);
+    params.append("total_price", `NT$${total_sum}`);
 
-    console.log("準備傳送的 UID:", memberUid); // 測試用：請在 F12 Console 檢查
+    console.log("正在發送到 GAS, UID 為:", memberUid);
 
-    // 5. 準備寫入 Firestore
     let firestorePromise = Promise.resolve();
     if (user && window.db && window.firestoreTools) {
         firestorePromise = window.firestoreTools.addDoc(window.firestoreTools.collection(window.db, "orders"), {
@@ -243,18 +230,16 @@ function submitOrder() {
         });
     }
 
-    // 6. 同步執行雙重備份
     Promise.all([
         fetch(SCRIPT_URL, { 
             method: 'POST', 
-            body: searchParams.toString(), 
+            body: params.toString(), 
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
             mode: 'no-cors' 
         }),
         firestorePromise
     ])
     .then(() => {
-        // 成功後記憶會員資料，方便下次免填
         if (user) {
             const profile = {
                 phone: phone,
@@ -263,7 +248,6 @@ function submitOrder() {
             };
             localStorage.setItem(`profile_${user.uid}`, JSON.stringify(profile));
         }
-
         alert("🎉 訂單成功送出！\n我們將盡快為您處理。");
         cart = [];
         saveAndUpdate();
