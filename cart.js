@@ -172,26 +172,39 @@ function showToast(msg) {
 }
 
 function checkout() {
+   function checkout() {
     if (!cart.length) return alert("購物車是空的喔！");
+
+    // 🌟 新增：檢查是否登入
+    const currentUser = window.firebaseAuth?.currentUser;
+    
+    if (!currentUser) {
+        showToast("📢 請先登入會員才能進行結帳喔！");
+        // 自動幫使用者開啟登入流程（可選）
+        if (confirm("結帳前請先登入 Google 帳號，是否現在登入？")) {
+            window.handleAuth();
+        }
+        return; // 攔截，不讓彈窗開啟
+    }
+
+    // 已登入，則正常開啟結帳彈窗
     toggleCart();
     document.getElementById("checkout-modal").style.display = "flex";
 
+    // 自動填入會員資料
     setTimeout(() => {
-        const orderUser = window.firebaseAuth?.currentUser; 
-        if (orderUser) {
-            if (document.getElementById("name")) document.getElementById("name").value = orderUser.displayName || "";
-            if (document.getElementById("email")) document.getElementById("email").value = orderUser.email || "";
-            const saved = localStorage.getItem(`profile_${orderUser.uid}`);
-            if (saved) {
-                const profile = JSON.parse(saved);
-                if (document.getElementById("phone")) document.getElementById("phone").value = profile.phone || "";
-                if (document.getElementById("address")) document.getElementById("address").value = profile.address || "";
-                if (document.getElementById("store-info")) document.getElementById("store-info").value = profile.store || "";
-            }
+        if (document.getElementById("name")) document.getElementById("name").value = currentUser.displayName || "";
+        if (document.getElementById("email")) document.getElementById("email").value = currentUser.email || "";
+        
+        const saved = localStorage.getItem(`profile_${currentUser.uid}`);
+        if (saved) {
+            const profile = JSON.parse(saved);
+            if (document.getElementById("phone")) document.getElementById("phone").value = profile.phone || "";
+            if (document.getElementById("address")) document.getElementById("address").value = profile.address || "";
+            if (document.getElementById("store-info")) document.getElementById("store-info").value = profile.store || "";
         }
     }, 100);
 }
-
 function closeModal() { document.getElementById("checkout-modal").style.display = "none"; }
 
 function submitOrder() {
