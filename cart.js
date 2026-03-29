@@ -229,7 +229,8 @@ function checkout() {
             }
         }, 50);
     }
-}function closeModal() { document.getElementById("checkout-modal").style.display = "none"; }
+}
+function closeModal() { document.getElementById("checkout-modal").style.display = "none"; }
 
 function submitOrder() {
     if (isSubmitting) return;
