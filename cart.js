@@ -172,40 +172,64 @@ function showToast(msg) {
 }
 
 function checkout() {
-   function checkout() {
-    if (!cart.length) return alert("購物車是空的喔！");
-
-    // 🌟 新增：檢查是否登入
-    const currentUser = window.firebaseAuth?.currentUser;
-    
-    if (!currentUser) {
-        showToast("📢 請先登入會員才能進行結帳喔！");
-        // 自動幫使用者開啟登入流程（可選）
-        if (confirm("結帳前請先登入 Google 帳號，是否現在登入？")) {
-            window.handleAuth();
-        }
-        return; // 攔截，不讓彈窗開啟
+    // 1. 檢查購物車是否有東西
+    if (cart.length === 0) {
+        alert("購物車內沒有商品喔！🐾");
+        return;
     }
 
-    // 已登入，則正常開啟結帳彈窗
-    toggleCart();
-    document.getElementById("checkout-modal").style.display = "flex";
+    // 2. 獲取當前登入狀態 (加上全域變數檢查)
+    const auth = window.firebaseAuth || (typeof getAuth === 'function' ? getAuth() : null);
+    const currentUser = auth ? auth.currentUser : null;
 
-    // 自動填入會員資料
-    setTimeout(() => {
-        if (document.getElementById("name")) document.getElementById("name").value = currentUser.displayName || "";
-        if (document.getElementById("email")) document.getElementById("email").value = currentUser.email || "";
+    console.log("當前登入狀態:", currentUser); // 👈 偵錯用：按下 F12 可以看到有沒有抓到人
+
+    // 3. 強制攔截邏輯
+    if (!currentUser) {
+        // 顯示提示訊息
+        showToast("📢 請先登入會員才能結帳！");
         
-        const saved = localStorage.getItem(`profile_${currentUser.uid}`);
-        if (saved) {
-            const profile = JSON.parse(saved);
-            if (document.getElementById("phone")) document.getElementById("phone").value = profile.phone || "";
-            if (document.getElementById("address")) document.getElementById("address").value = profile.address || "";
-            if (document.getElementById("store-info")) document.getElementById("store-info").value = profile.store || "";
+        // 彈出確認視窗引導登入
+        if (confirm("為了記錄您的訂單，結帳前請先登入 Google 帳號。\n現在要跳轉至登入頁面嗎？")) {
+            if (typeof window.handleAuth === 'function') {
+                window.handleAuth();
+            } else {
+                alert("登入功能初始化中，請稍候再試或重新整理網頁。");
+            }
         }
-    }, 100);
-}
-function closeModal() { document.getElementById("checkout-modal").style.display = "none"; }
+        return; // 🛑 關鍵：絕對不讓程式跑下去
+    }
+
+    // 4. 通過檢查，開啟結帳視窗
+    console.log("身分驗證成功，開啟結帳視窗");
+    
+    // 關閉購物車側邊欄
+    const sidebar = document.getElementById("cart-sidebar");
+    if (sidebar) sidebar.classList.remove("open");
+
+    // 顯示結帳彈窗
+    const modal = document.getElementById("checkout-modal");
+    if (modal) {
+        modal.style.display = "flex";
+        
+        // 自動帶入資料
+        setTimeout(() => {
+            const nameInput = document.getElementById("name");
+            const emailInput = document.getElementById("email");
+            if (nameInput) nameInput.value = currentUser.displayName || "";
+            if (emailInput) emailInput.value = currentUser.email || "";
+            
+            // 讀取 localStorage 紀錄
+            const saved = localStorage.getItem(`profile_${currentUser.uid}`);
+            if (saved) {
+                const profile = JSON.parse(saved);
+                if (document.getElementById("phone")) document.getElementById("phone").value = profile.phone || "";
+                if (document.getElementById("address")) document.getElementById("address").value = profile.address || "";
+                if (document.getElementById("store-info")) document.getElementById("store-info").value = profile.store || "";
+            }
+        }, 50);
+    }
+}function closeModal() { document.getElementById("checkout-modal").style.display = "none"; }
 
 function submitOrder() {
     if (isSubmitting) return;
