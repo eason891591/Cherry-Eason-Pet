@@ -52,7 +52,6 @@
         <input type="text" id="product-search" placeholder="搜尋商品名稱...">
     </div>
 </header>
-
 <section class="hero">
     <div class="container">
         <h1>歡迎來到 Cherry&Eason Pet</h1>
@@ -82,54 +81,95 @@
     </div>
 </section>
 
-<div id="checkout-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 10005; justify-content: center; align-items: center;">
-    <div style="background: white; padding: 25px; border-radius: 20px; width: 90%; max-width: 450px; max-height: 85vh; overflow-y: auto;">
+<div id="checkout-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 10000; justify-content: center; align-items: center; backdrop-filter: blur(5px);">
+    <div style="background: white; padding: 25px; border-radius: 20px; width: 90%; max-width: 450px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); position: relative; max-height: 85vh; overflow-y: auto; display: flex; flex-direction: column;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
             <h3 style="margin:0; color:#5C3A00;">📋 填寫訂購資訊</h3>
             <span onclick="closeModal()" style="cursor:pointer; font-size:24px; color:#999;">&times;</span>
         </div>
+        
         <form id="checkout-form">
-            <input type="text" id="name" placeholder="收件人姓名" style="width: 100%; padding: 10px; margin-bottom: 12px; border-radius: 8px; border: 1px solid #ddd; box-sizing: border-box;" required>
-            <input type="tel" id="phone" placeholder="聯絡電話" style="width: 100%; padding: 10px; margin-bottom: 12px; border-radius: 8px; border: 1px solid #ddd; box-sizing: border-box;" required>
-            <input type="email" id="email" placeholder="電子郵件" style="width: 100%; padding: 10px; margin-bottom: 12px; border-radius: 8px; border: 1px solid #ddd; box-sizing: border-box;" required>
-            
-            <select id="delivery-method" style="width: 100%; padding: 10px; margin-bottom: 12px; border-radius: 8px; border: 1px solid #ddd;" required>
-                <option value="" disabled selected>📦 請選擇取貨方式</option>
-                <option value="宅配/郵寄">🏠 宅配/郵寄</option>
-                <option value="超商取貨">🏪 超商取貨 (7-11/全家/萊爾富)</option>
-            </select>
-            <div id="address-section" style="display: none;">
-                <input type="text" id="address" placeholder="收件地址" style="width: 100%; padding: 10px; margin-bottom: 12px; border-radius: 8px; border: 1px solid #ddd; box-sizing: border-box;">
+            <div style="margin-bottom: 12px;">
+                <label style="display:block; margin-bottom:5px; font-weight:bold; color:#555;">收件人姓名</label>
+                <input type="text" id="name" name="name" placeholder="請輸入姓名" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box;" required>
             </div>
-            <div id="store-section" style="display: none;">
-                <input type="text" id="store-info" placeholder="超商門市名稱與店號" style="width: 100%; padding: 10px; margin-bottom: 12px; border-radius: 8px; border: 1px solid #ddd; box-sizing: border-box;">
+            <div style="margin-bottom: 12px;">
+                <label style="display:block; margin-bottom:5px; font-weight:bold; color:#555;">聯絡電話</label>
+                <input type="tel" id="phone" name="phone" placeholder="例如：0912345678" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box;" required>
+            </div>
+            <div style="margin-bottom: 12px;">
+                <label style="display:block; margin-bottom:5px; font-weight:bold; color:#555;">電子郵件</label>
+                <input type="email" id="email" name="email" placeholder="example@mail.com" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box;" required>
+            </div>
+
+            <div style="margin-bottom: 12px;">
+                <label style="display:block; margin-bottom:5px; font-weight:bold; color:#555;">📦 取貨方式</label>
+                <select id="delivery-method" name="delivery_method" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; background: white; cursor: pointer;" required>
+                    <option value="" disabled selected>請選擇取貨方式</option>
+                    <option value="宅配/郵寄">🏠 宅配/郵寄</option>
+                    <option value="超商取貨">🏪 超商取貨 (7-11/全家/萊爾富)</option>
+                </select>
+            </div>
+
+            <div id="address-section" style="margin-bottom: 12px; display: none;">
+                <label style="display:block; margin-bottom:5px; font-weight:bold; color:#555;">收件地址</label>
+                <input type="text" id="address" name="address" placeholder="請輸入完整的收件地址" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box;">
+            </div>
+
+            <div id="store-section" style="margin-bottom: 12px; display: none; background: #f9f9f9; padding: 10px; border-radius: 8px; border: 1px dashed #ccc;">
+                <label style="display:block; margin-bottom:5px; font-weight:bold; color:#555;">超商門市名稱與店號</label>
+                <input type="text" id="store-info" name="store_info" placeholder="例如：7-11 鑫台中門市 (店號:123456)" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box;">
+                <small style="color: #888; display: block; margin-top: 5px;">* 請務必填寫正確的超商名稱及店號</small>
             </div>
             
-            <select id="payment-method" style="width: 100%; padding: 10px; margin-bottom: 12px; border-radius: 8px; border: 1px solid #ddd;" required>
-                <option value="" disabled selected>💰 請選擇付款方式</option>
-                <option value="貨到付款">🚚 貨到付款</option>
-                <option value="銀行轉帳">🏦 銀行轉帳</option>
-            </select>
-            <div id="transfer-info" style="display: none; background: #fff9e6; padding: 12px; border-radius: 8px; margin-bottom: 12px; border: 1px solid #ffeeba;">
-                銀行代碼：013 (國泰世華)<br>帳號：2565-0632-6359<br><small>* 轉帳後請於下方備註告知後五碼</small>
+            <div style="margin-bottom: 12px;">
+                <label style="display:block; margin-bottom:5px; font-weight:bold; color:#555;">💰 付款方式</label>
+                <select id="payment-method" name="payment_method" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; background: white; cursor: pointer;" required>
+                    <option value="" disabled selected>請選擇付款方式</option>
+                    <option value="貨到付款">🚚 貨到付款 (含超商取貨付款)</option>
+                    <option value="銀行轉帳">🏦 銀行轉帳 (先匯款後出貨)</option>
+                </select>
             </div>
-            
-            <textarea id="order-note" rows="2" placeholder="📝 訂單備註 (選填)" style="width: 100%; padding: 10px; margin-bottom: 15px; border-radius: 8px; border: 1px solid #ddd; box-sizing: border-box; resize: none;"></textarea>
-            
-            <button type="button" id="submit-btn" onclick="submitOrder()" style="width: 100%; padding: 14px; background: #5C3A00; color: white; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; font-size: 1rem;">🚀 確認送出訂單</button>
+
+            <div id="transfer-info" style="display: none; background: #fff9e6; padding: 12px; border-radius: 8px; margin-bottom: 12px; border: 1px solid #ffeeba; font-size: 0.9rem; line-height: 1.5;">
+                <p style="margin:0 0 5px 0; font-weight:bold; color:#856404;">🏦 匯款帳號資訊：</p>
+                銀行代碼：013 (國泰世華)<br>
+                帳號：2565-0632-6359<br>
+                <small style="color: #666;">* 轉帳後請於下方備註告知後五碼</small>
+            </div>
+
+            <div style="margin-bottom: 20px;">
+                <label style="display:block; margin-bottom:5px; font-weight:bold; color:#555;">📝 訂單備註 (選填)</label>
+                <textarea id="order-note" name="note" rows="2" placeholder="備註收貨時間或轉帳後五碼..." style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; resize: none; box-sizing: border-box; font-family: inherit;"></textarea>
+            </div>
+
+            <div style="margin-top: 10px;">
+                <button type="button" id="submit-btn" onclick="submitOrder()" style="width: 100%; padding: 14px; background: #5C3A00; color: white; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; font-size: 1rem; margin-bottom: 10px;">
+                    🚀 確認送出訂單
+                </button>
+                <button type="button" onclick="closeModal()" style="width: 100%; padding: 10px; background: #eee; border: none; border-radius: 8px; cursor: pointer; color: #666; font-weight: bold;">
+                    ⬅️ 返回購物車
+                </button>
+            </div>
         </form>
     </div>
 </div>
 
 <footer id="footer-section">
     <h3>聯絡我們</h3>
-    <p><a href="Https://www.instagram.com/cherry_10.12?igsh=MTh0cGFua3FyZzY4ZQ==" target="_blank" style="color: #FFD27F; text-decoration: none;">📸 Instagram：點此前往</a></p>
+    <p>
+        <a href="Https://www.instagram.com/cherry_10.12?igsh=MTh0cGFua3FyZzY4ZQ==" target="_blank" class="contact-link">📸 IG：點此前往</a>
+    </p>
+    <p>
+        <a href="#" class="contact-link">💬 LINE：點此前往</a>
+    </p>
     <p>© 2026 Cherry&Eason Pet. All Rights Reserved.</p>
 </footer>
 
 <div id="cart-sidebar" class="cart-panel"></div>
 <div id="toast"></div>
-<a href="#top" id="back-to-top">⬆️</a>
+
+<a href="#top" id="back-to-top" title="回到最上層">⬆️</a>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
@@ -151,6 +191,7 @@
     const db = getFirestore(app);
     const provider = new GoogleAuthProvider();
     
+    // 將 Firebase 功能暴露給全域環境，讓 cart.js 可以使用
     window.firebaseAuth = auth;
     window.db = db;
     window.firestoreTools = { collection, addDoc, serverTimestamp };
@@ -183,6 +224,7 @@
       }
     });
 </script>
+
 <script src="cart.js"></script>
 </body>
 </html>
