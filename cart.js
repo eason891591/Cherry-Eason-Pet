@@ -290,3 +290,36 @@ function submitOrder() {
         btn.disabled = false;
     });
 }
+
+// ==========================================
+// 🌟 介面優化與互動效果區 (新增)
+// ==========================================
+
+// 1. 解決手機版「商品分類」下拉選單點擊後不會自動收合的問題
+document.querySelectorAll('.dropdown-content a').forEach(link => {
+    link.addEventListener('click', () => {
+        const dropdownContent = link.closest('.dropdown-content');
+        if (dropdownContent) {
+            // 強制隱藏下拉選單
+            dropdownContent.style.display = 'none';
+            // 延遲 300 毫秒後清除強制樣式，讓 CSS 的 :hover 邏輯可以重新接管
+            setTimeout(() => {
+                dropdownContent.style.display = '';
+            }, 300);
+        }
+    });
+});
+
+// 2. 控制「回到最上方」按鈕的淡出與淡入
+window.addEventListener('scroll', () => {
+    const topBtn = document.getElementById('back-to-top');
+    if (topBtn) {
+        // 當畫面往下滾動超過 300px 時，加入 .show 類別讓他顯示
+        if (window.scrollY > 300) {
+            topBtn.classList.add('show');
+        } else {
+            // 回到最頂端時，移除 .show 類別讓他淡出隱藏
+            topBtn.classList.remove('show');
+        }
+    }
+});

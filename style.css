@@ -88,7 +88,7 @@ body {
 #toast { visibility: hidden; position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: #333; color: white; padding: 15px 30px; border-radius: 50px; z-index: 10002; }
 #toast.show { visibility: visible; }
 
-/* --- 🚀 回到最上方按鈕 (修正 ID 選擇器) --- */
+/* --- 🚀 回到最上方按鈕 (加入預設隱藏與漸變效果) --- */
 #back-to-top {
     position: fixed;
     bottom: 30px;
@@ -105,19 +105,48 @@ body {
     font-size: 24px;
     z-index: 9998;
     box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-    transition: 0.3s;
-    opacity: 0.8;
+    transition: all 0.4s ease; /* 讓淡入淡出更平滑 */
+    opacity: 0; /* 預設為全透明 */
+    visibility: hidden; /* 預設不可見，避免擋住點擊 */
 }
-#back-to-top:hover {
+/* 透過 JS 觸發的顯示狀態 */
+#back-to-top.show {
+    opacity: 0.8;
+    visibility: visible;
+}
+#back-to-top.show:hover {
     opacity: 1;
     transform: scale(1.1);
     background-color: #FF4500;
 }
-/* --- 手機版自適應 --- */
+
+/* --- 手機版自適應 (解決重疊問題) --- */
 @media (max-width: 480px) {
     body { padding-top: 210px; }
+    
+    /* ✨ 修正 2: 標題與購物車重疊 */
+    .header-top { 
+        width: 100%; 
+        padding: 0 20px; 
+        box-sizing: border-box; 
+        justify-content: space-between; /* 讓 Logo 靠左，購物車靠右 */
+    }
+    .logo { 
+        font-size: 18px; /* 字體稍微縮小適應手機 */
+    }
+    .cart-icon { 
+        position: relative; /* 取消絕對定位，避免蓋到字 */
+        right: 0; 
+        transform: none; 
+        top: auto; 
+    }
+
+    /* 原本的手機版商品卡片樣式保持不變 */
     .product { width: calc(50% - 15px); padding: 12px; min-height: 410px; }
     .product h3 { font-size: 0.9rem; height: 2.8em; }
     .variant-select, .variant-placeholder { height: 38px !important; }
     .cart-panel { width: 100%; }
+    
+    /* 讓回到最上方的按鈕在手機版稍微小一點 */
+    #back-to-top { bottom: 20px; right: 20px; width: 40px; height: 40px; font-size: 20px; }
 }
