@@ -321,18 +321,39 @@ window.addEventListener('scroll', () => {
 });
 
 // ==========================================
-// 🌟 手機側邊選單控制
+// 🌟 核心修復：手機版導覽列控制
 // ==========================================
+
+// 1. 切換選單開關
 function toggleMenu() {
     const nav = document.getElementById('mobile-nav');
     const overlay = document.getElementById('nav-overlay');
+    
     if (nav && overlay) {
-        const isActive = nav.classList.toggle('active');
+        nav.classList.toggle('active');
         overlay.classList.toggle('active');
-        document.body.style.overflow = isActive ? 'hidden' : '';
+
+        // 防止開啟選單時後方頁面還能滾動
+        if (nav.classList.contains('active')) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = '';
+        }
     }
 }
 
+// 2. 處理導覽連結點擊 (點擊後自動收合選單)
 function handleNavClick() {
-    if (window.innerWidth <= 480) { toggleMenu(); }
+    const nav = document.getElementById('mobile-nav');
+    const overlay = document.getElementById('nav-overlay');
+    
+    // 如果目前是開啟狀態（active），則將其關閉
+    if (nav && nav.classList.contains('active')) {
+        nav.classList.remove('active');
+        overlay.classList.remove('active');
+        document.body.style.overflow = '';
+    }
 }
+
+// 3. 確保 filterProducts 執行時也會觸發收合 (可選，但建議加上)
+// 原有的 filterProducts 函數結尾可以加上 handleNavClick();

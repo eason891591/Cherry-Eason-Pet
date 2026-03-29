@@ -30,7 +30,18 @@ body {
 .cart-icon { position: absolute; right: 20px; top: 50%; transform: translateY(-50%); cursor: pointer; font-size: 22px; }
 #cart-count { background: #5C3A00; color: white; padding: 2px 8px; border-radius: 50%; font-size: 14px; }
 
-.nav { display: flex; gap: 15px; margin-top: 10px; align-items: center; }
+.nav { 
+    display: flex; 
+    flex-direction: row; /* 👈 確保桌面版是橫向 */
+    gap: 15px; 
+    margin-top: 10px; 
+    align-items: center; 
+    position: static; /* 👈 確保不是 fixed */
+    width: auto; 
+    height: auto; 
+    background: transparent; 
+    box-shadow: none;
+}
 .nav a { text-decoration: none; color: #5C3A00; font-weight: bold; }
 
 /* 下拉選單 */
@@ -85,6 +96,23 @@ body {
 #footer-section a { text-decoration: none; color: inherit !important; font-weight: 500; transition: 0.3s; display: flex; align-items: center; gap: 8px; }
 #footer-section a:hover { color: #FFD27F !important; transform: translateY(-2px); }
 
+/* --- 🌟 修復：會員登入按鈕 (電腦版與手機版通用基礎) --- */
+#auth-btn { 
+    background: #5C3A00; /* 深褐色背景 */
+    color: white;        /* 白色文字 */
+    border: none; 
+    padding: 8px 20px;   /* 增加一點內距 */
+    border-radius: 20px; /* 圓角樣式 */
+    cursor: pointer; 
+    font-weight: bold; 
+    font-size: 14px;
+    transition: background 0.3s ease;
+}
+
+#auth-btn:hover {
+    background: #754B00;
+}
+
 
 /* --- 其他 UI 元件 --- */
 .cart-panel { position: fixed; right: -400px; top: 0; width: 350px; height: 100%; background: white; z-index: 10001; transition: 0.4s; box-shadow: -5px 0 15px rgba(0,0,0,0.1); }
@@ -107,7 +135,7 @@ body {
     justify-content: center;
     text-decoration: none;
     font-size: 24px;
-    z-index: 9998;
+    z-index: 9999;
     box-shadow: 0 4px 10px rgba(0,0,0,0.2);
     transition: all 0.4s ease; /* 讓淡入淡出更平滑 */
     opacity: 0; /* 預設為全透明 */
@@ -132,34 +160,56 @@ body {
     .logo { font-size: 19px; }
     .cart-icon { position: static; transform: none; }
     
-    /* 漢堡按鈕出現 */
-    .menu-toggle { display: block; font-size: 28px; cursor: pointer; color: #5C3A00; z-index: 10000; }
+    .menu-toggle { display: block; font-size: 28px; cursor: pointer; color: #5C3A00; z-index: 10002; }
 
-    /* 導覽列變側邊欄 */
+    /* 手機版導覽變側邊欄 */
     .nav {
         position: fixed; top: 0; left: -300px; width: 260px; height: 100vh;
         background: white; flex-direction: column !important; align-items: flex-start !important;
         padding: 60px 20px !important; margin: 0 !important; z-index: 10001;
         transition: left 0.3s ease-in-out; box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+        overflow-y: auto;
     }
     .nav.active { left: 0; }
     .nav-close { display: block; position: absolute; top: 15px; right: 20px; font-size: 36px; cursor: pointer; color: #888; }
     
     .nav a, .dropdown { font-size: 18px; width: 100%; padding: 12px 0; border-bottom: 1px solid #f0f0f0; }
 
-    /* 搜尋列 */
-    .search-bar { width: 95%; margin: 10px auto; }
+    /* 手機版會員區：強制換行並靠左 */
+    #auth-section { 
+        display: flex !important; 
+        flex-direction: column !important; 
+        align-items: flex-start !important; 
+        width: 100%; 
+        margin-top: 30px !important; 
+        padding: 20px 0 40px 0; 
+        border-top: 1px solid #eee; 
+        margin-left: 0;
+    }
+    #auth-btn { width: 100%; padding: 12px; margin-top: 10px; }
 
-    /* 側邊欄會員區 */
-    #auth-section { flex-direction: column !important; align-items: flex-start !important; margin-left: 0 !important; margin-top: auto !important; width: 100%; padding-top: 20px; border-top: 1px solid #eee; }
-    #auth-btn { width: 100%; padding: 12px; }
+    .search-bar { 
+        width: 100%; 
+        max-width: 100%; 
+        margin: 10px 0; 
+        padding: 0 15px; /* 給左右留一點間距，不要貼死邊緣 */
+        box-sizing: border-box; /* 關鍵：讓 padding 不會增加總寬度 */
+        display: flex;
+        justify-content: center;
+    }
 
-    /* 遮罩 */
-    #nav-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 10000; display: none; }
+    /* 修正輸入框本體 */
+    .search-bar input { 
+        width: 100%; 
+        padding: 12px 15px; 
+        font-size: 16px; /* 防止 iOS 自動放大 */
+        box-sizing: border-box; /* 關鍵：讓 padding 不會增加總寬度 */
+        border: 1px solid #ddd;
+        border-radius: 25px;
+    }
+
+    #nav-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 9998; display: none; }
     #nav-overlay.active { display: block; }
 
-    /* 手機版商品排列 */
     .product { width: calc(50% - 15px) !important; min-height: 410px; padding: 12px; }
-    .cart-panel { width: 100%; right: -100%; }
-    .cart-panel.open { right: 0; }
 }
