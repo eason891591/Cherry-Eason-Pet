@@ -131,7 +131,9 @@ function updateCart() {
     if (countEl) countEl.innerText = qtyTotal;
 }
 
+// 🌟 修改點：切換分類時自動執行回商店邏輯
 function filterProducts(category) {
+    backToShop(); 
     const filtered = (category === 'all') ? allProducts : allProducts.filter(p => p.category === category);
     renderProducts(filtered);
     document.getElementById('shop')?.scrollIntoView({ behavior: 'smooth' });
@@ -207,7 +209,6 @@ function checkout() {
 }
 function closeModal() { document.getElementById("checkout-modal").style.display = "none"; }
 
-// 🌟 改為 async 函式，以確保能按順序拿到 Firebase ID
 async function submitOrder() {
     if (isSubmitting) return;
 
@@ -242,9 +243,8 @@ async function submitOrder() {
     btn.disabled = true;
 
     try {
-        let currentOrderId = "無ID_" + new Date().getTime(); // 預設值
+        let currentOrderId = "無ID_" + new Date().getTime();
 
-        // 1. 先將訂單存入 Firebase，並取得產生的 ID
         if (orderUser && window.db && window.firestoreTools) {
             const docRef = await window.firestoreTools.addDoc(window.firestoreTools.collection(window.db, "orders"), {
                 userId: orderUser.uid,
@@ -257,15 +257,14 @@ async function submitOrder() {
                 address: finalAddress,
                 deliveryMethod: delivery,
                 paymentMethod: payment,
-                status: "訂單處理中", // 🌟 統一初始狀態
+                status: "訂單處理中",
                 createdAt: window.firestoreTools.serverTimestamp()
             });
-            currentOrderId = docRef.id; // 🌟 成功拿到 Firebase 的訂單 ID
+            currentOrderId = docRef.id;
         }
 
-        // 2. 準備傳送給 Google Sheets 的資料
         const params = new URLSearchParams();
-        params.append("orderId", currentOrderId); // 🌟 新增：傳送 ID
+        params.append("orderId", currentOrderId);
         params.append("name", name);
         params.append("phone", phone);
         params.append("email", email);
@@ -276,9 +275,8 @@ async function submitOrder() {
         params.append("uid", memberUid);
         params.append("order_details", order_details_text);
         params.append("total_price", `NT$${total_sum}`);
-        params.append("status", "訂單處理中"); // 🌟 新增：傳送初始狀態
+        params.append("status", "訂單處理中");
 
-        // 3. 傳送到 Apps Script
         await fetch(SCRIPT_URL, { 
             method: 'POST', 
             body: params.toString(), 
@@ -286,7 +284,6 @@ async function submitOrder() {
             mode: 'no-cors' 
         });
 
-        // 4. 儲存個人資訊供下次使用
         if (orderUser) {
             const profile = {
                 phone: phone,
@@ -312,7 +309,7 @@ async function submitOrder() {
         btn.disabled = false;
     }
 }
-// 1. 解決手機版「商品分類」下拉選單點擊後不會自動收合的問題
+
 document.querySelectorAll('.dropdown-content a').forEach(link => {
     link.addEventListener('click', () => {
         const dropdownContent = link.closest('.dropdown-content');
@@ -355,6 +352,7 @@ function handleNavClick() {
 // 👤 會員中心邏輯 (Member Center)
 // ==========================================
 
+// 🌟 修改點：進入會員中心時隱藏商店、品牌故事與 Hero 區
 function showMemberCenter() {
     const user = window.firebaseAuth?.currentUser;
     if (!user) {
@@ -363,9 +361,15 @@ function showMemberCenter() {
         return;
     }
 
-    document.getElementById('shop').style.display = 'none';
-    document.getElementById('about-section').style.display = 'none';
-    document.getElementById('member-section').style.display = 'block';
+    const shop = document.getElementById('shop');
+    const about = document.getElementById('about-section');
+    const member = document.getElementById('member-section');
+    const hero = document.querySelector('.hero');
+
+    if (shop) shop.style.display = 'none';
+    if (about) about.style.display = 'none';
+    if (hero) hero.style.display = 'none';
+    if (member) member.style.display = 'block';
     
     window.scrollTo({ top: 0, behavior: 'smooth' });
 
@@ -375,10 +379,17 @@ function showMemberCenter() {
     fetchUserOrders(user.uid);
 }
 
+// 🌟 修改點：回到商店時恢復顯示所有區塊
 function backToShop() {
-    document.getElementById('shop').style.display = 'block';
-    document.getElementById('about-section').style.display = 'block';
-    document.getElementById('member-section').style.display = 'none';
+    const shop = document.getElementById('shop');
+    const about = document.getElementById('about-section');
+    const member = document.getElementById('member-section');
+    const hero = document.querySelector('.hero');
+
+    if (shop) shop.style.display = 'block';
+    if (about) about.style.display = 'block';
+    if (hero) hero.style.display = 'block';
+    if (member) member.style.display = 'none';
 }
 
 function switchMemberTab(tab) {
@@ -400,7 +411,6 @@ function switchMemberTab(tab) {
     }
 }
 
-// 🌟 強化版：從 Firebase 抓取訂單並手動排序 (防報錯機制)
 async function fetchUserOrders(uid) {
     const container = document.getElementById('order-list-container');
     const emptyMsg = document.getElementById('order-list-empty');
@@ -412,7 +422,6 @@ async function fetchUserOrders(uid) {
     try {
         const { query, collection, where, getDocs } = window.firestoreTools; 
         
-        // 拿掉 orderBy 避免需要額外設定索引
         const q = query(
             collection(window.db, "orders"),
             where("userId", "==", uid)
@@ -427,18 +436,14 @@ async function fetchUserOrders(uid) {
 
         emptyMsg.style.display = 'none';
         
-        // 轉為陣列並進行手動排序（最新訂單在上）
         let orders = [];
         querySnapshot.forEach(doc => {
             orders.push({ id: doc.id, ...doc.data() });
         });
         orders.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
         
-        // 渲染訂單卡片
         orders.forEach((data) => {
             const date = data.createdAt ? new Date(data.createdAt.seconds * 1000).toLocaleDateString() : "處理中";
-            
-            // 兼容舊格式與新格式
             const orderTotal = data.totalAmount ? `NT$ ${data.totalAmount}` : (data.total || "處理中");
             const orderDetails = data.details || (data.items ? data.items.map(i => `${i.name}(${i.variant || '單一規格'}) x ${i.qty}`).join(', ') : "無詳細資訊");
 

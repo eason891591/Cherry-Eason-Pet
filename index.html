@@ -21,31 +21,33 @@
     </div>
 
     <nav class="nav" id="mobile-nav">
-        <div class="nav-close" onclick="toggleMenu()">&times;</div>
-        
-        <a href="#top" onclick="handleNavClick()">首頁</a> 
-        <div class="dropdown">
-            <a href="javascript:void(0)" class="dropbtn">商品分類 ▾</a>
-            <div class="dropdown-content">
-                <a href="javascript:void(0)" onclick="filterProducts('hot'); handleNavClick()">🔥 熱門商品</a>
-                <a href="javascript:void(0)" onclick="filterProducts('all'); handleNavClick()">🌟 所有商品</a>
-                <hr style="border: 0; border-top: 1px solid #eee; margin: 5px 0;">
-                <a href="javascript:void(0)" onclick="filterProducts('cat-treats'); handleNavClick()">🐱 貓貓零食</a>
-                <a href="javascript:void(0)" onclick="filterProducts('dog-treats'); handleNavClick()">🐶 狗狗零食</a>
-                <a href="javascript:void(0)" onclick="filterProducts('cat-supplies'); handleNavClick()">🐈 貓貓用品</a>
-                <a href="javascript:void(0)" onclick="filterProducts('dog-supplies'); handleNavClick()">🐕 狗狗用品</a>
-                <a href="javascript:void(0)" onclick="filterProducts('all-pets'); handleNavClick()">🐾 貓狗通用</a>
-            </div>
-        </div>
-        <a href="#about-section" onclick="handleNavClick()">品牌故事</a>
-        <a href="#footer-section" onclick="handleNavClick()">聯絡我們</a>
+    <div class="nav-close" onclick="toggleMenu()">&times;</div>
+    
+    <a href="#top" onclick="backToShop(); handleNavClick()">首頁</a> 
 
-        <div id="auth-section">
-            <img id="user-avatar" src="" style="display: none; width: 28px; height: 28px; border-radius: 50%; border: 1px solid #FFD27F; vertical-align: middle; margin-right: 5px;">
-            <span id="user-info" onclick="showMemberCenter()" style="font-size: 14px; color: #5C3A00; font-weight: bold; cursor: pointer; text-decoration: underline;">訪客</span>
-            <button id="auth-btn" onclick="handleAuth()">登入</button>
+    <div class="dropdown">
+        <a href="javascript:void(0)" class="dropbtn">商品分類 ▾</a>
+        <div class="dropdown-content">
+            <a href="javascript:void(0)" onclick="backToShop(); filterProducts('hot'); handleNavClick()">🔥 熱門商品</a>
+            <a href="javascript:void(0)" onclick="backToShop(); filterProducts('all'); handleNavClick()">🌟 所有商品</a>
+            <hr style="border: 0; border-top: 1px solid #eee; margin: 5px 0;">
+            <a href="javascript:void(0)" onclick="backToShop(); filterProducts('cat-treats'); handleNavClick()">🐱 貓貓零食</a>
+            <a href="javascript:void(0)" onclick="backToShop(); filterProducts('dog-treats'); handleNavClick()">🐶 狗狗零食</a>
+            <a href="javascript:void(0)" onclick="backToShop(); filterProducts('cat-supplies'); handleNavClick()">🐈 貓貓用品</a>
+            <a href="javascript:void(0)" onclick="backToShop(); filterProducts('dog-supplies'); handleNavClick()">🐕 狗狗用品</a>
+            <a href="javascript:void(0)" onclick="backToShop(); filterProducts('all-pets'); handleNavClick()">🐾 貓狗通用</a>
         </div>
-    </nav>
+    </div>
+
+    <a href="#about-section" onclick="backToShop(); handleNavClick()">品牌故事</a>
+    <a href="#footer-section" onclick="backToShop(); handleNavClick()">聯絡我們</a>
+
+    <div id="auth-section">
+        <img id="user-avatar" src="" style="display: none; width: 28px; height: 28px; border-radius: 50%; border: 1px solid #FFD27F; vertical-align: middle; margin-right: 5px;">
+        <span id="user-info" onclick="showMemberCenter(); handleNavClick()" style="font-size: 14px; color: #5C3A00; font-weight: bold; cursor: pointer; text-decoration: underline;">訪客</span>
+        <button id="auth-btn" onclick="handleAuth()">登入</button>
+    </div>
+</nav>
 
     <div class="search-bar">
         <input type="text" id="product-search" placeholder="搜尋商品名稱...">
