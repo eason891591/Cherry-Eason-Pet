@@ -395,3 +395,113 @@ function handleNavClick() {
 
 // 3. 確保 filterProducts 執行時也會觸發收合 (可選，但建議加上)
 // 原有的 filterProducts 函數結尾可以加上 handleNavClick();
+
+// ==========================================
+// 👤 會員中心邏輯 (Member Center)
+// ==========================================
+
+// 1. 顯示會員中心
+function showMemberCenter() {
+    const user = window.firebaseAuth?.currentUser;
+    
+    if (!user) {
+        showToast("📢 請先登入會員喔！");
+        if (window.handleAuth) window.handleAuth();
+        return;
+    }
+
+    // 隱藏其他區塊，只顯示會員區
+    document.getElementById('shop').style.display = 'none';
+    document.getElementById('about-section').style.display = 'none';
+    document.getElementById('member-section').style.display = 'block';
+    
+    // 確保回到頁面頂端
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    // 預填個人資訊分頁
+    document.getElementById('profile-display-name').innerText = user.displayName || "未設定";
+    document.getElementById('profile-display-email').innerText = user.email || "未設定";
+
+    // 抓取訂單
+    fetchUserOrders(user.uid);
+}
+
+// 2. 返回商店首頁
+function backToShop() {
+    document.getElementById('shop').style.display = 'block';
+    document.getElementById('about-section').style.display = 'block';
+    document.getElementById('member-section').style.display = 'none';
+}
+
+// 3. 切換內部頁籤 (訂單 vs 個人資訊)
+function switchMemberTab(tab) {
+    const orderContent = document.getElementById('member-content-orders');
+    const profileContent = document.getElementById('member-content-profile');
+    const tabOrders = document.getElementById('tab-orders');
+    const tabProfile = document.getElementById('tab-profile');
+
+    if (tab === 'orders') {
+        orderContent.style.display = 'block';
+        profileContent.style.display = 'none';
+        tabOrders.style.background = '#5C3A00'; tabOrders.style.color = 'white';
+        tabProfile.style.background = 'white'; tabProfile.style.color = '#555';
+    } else {
+        orderContent.style.display = 'none';
+        profileContent.style.display = 'block';
+        tabProfile.style.background = '#5C3A00'; tabProfile.style.color = 'white';
+        tabOrders.style.background = 'white'; tabOrders.style.color = '#555';
+    }
+}
+
+// 4. 從 Firebase 抓取屬於該用戶的訂單
+async function fetchUserOrders(uid) {
+    const container = document.getElementById('order-list-container');
+    const emptyMsg = document.getElementById('order-list-empty');
+    
+    container.innerHTML = ""; // 清空舊內容
+    emptyMsg.style.display = 'block';
+    emptyMsg.innerText = "🐾 正在努力讀取您的訂單紀錄...";
+
+    try {
+        const { query, collection, where, orderBy, getDocs } = window.firestoreTools; // 從全域獲取工具
+        const q = query(
+            collection(window.db, "orders"),
+            where("userId", "==", uid),
+            orderBy("createdAt", "desc") // 按時間排序：新 -> 舊
+        );
+
+        const querySnapshot = await getDocs(q);
+        
+        if (querySnapshot.empty) {
+            emptyMsg.innerText = "您目前還沒有訂單紀錄喔！趕快去逛逛吧 🐶";
+            return;
+        }
+
+        emptyMsg.style.display = 'none';
+        
+        querySnapshot.forEach((doc) => {
+            const data = doc.data();
+            const date = data.createdAt ? new Date(data.createdAt.seconds * 1000).toLocaleDateString() : "處理中";
+            
+            // 建立訂單卡片 HTML
+            const orderHtml = `
+                <div style="background: white; border-radius: 12px; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); border-left: 5px solid #FFD27F;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <span style="font-size: 0.85rem; color: #888;">日期：${date}</span>
+                        <span style="background: #FFF4E0; color: #D48806; padding: 3px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: bold;">
+                            ${data.status || '處理中'}
+                        </span>
+                    </div>
+                    <div style="font-weight: bold; color: #5C3A00; margin-bottom: 5px;">訂單編號：${doc.id.substring(0, 8).toUpperCase()}</div>
+                    <div style="font-size: 0.9rem; color: #555;">金額：NT$ ${data.totalAmount}</div>
+                    <div style="font-size: 0.85rem; color: #777; margin-top: 8px;">內容：${data.items.map(i => i.name).join('、')}</div>
+                </div>
+            `;
+            container.innerHTML += orderHtml;
+        });
+
+    } catch (error) {
+        console.error("讀取訂單失敗:", error);
+        emptyMsg.innerText = "❌ 暫時無法讀取訂單，請稍後再試。";
+    }
+}

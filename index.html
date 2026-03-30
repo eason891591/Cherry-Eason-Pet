@@ -68,6 +68,33 @@
     </div>
 </main>
 
+<section id="member-section" class="container" style="display: none; margin-top: 40px; min-height: 60vh;">
+    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #FFD27F; padding-bottom: 10px;">
+        <h2 style="color: #5C3A00; margin: 0;">👤 會員中心</h2>
+        <button onclick="backToShop()" style="padding: 8px 15px; background: #5C3A00; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold;">返回購物</button>
+    </div>
+    
+    <div style="display: flex; gap: 10px; margin: 20px 0;">
+        <button id="tab-orders" onclick="switchMemberTab('orders')" style="padding: 10px 20px; border-radius: 20px; border: 1px solid #5C3A00; background: #5C3A00; color: white; cursor: pointer;">歷史訂單</button>
+        <button id="tab-profile" onclick="switchMemberTab('profile')" style="padding: 10px 20px; border-radius: 20px; border: 1px solid #ccc; background: white; color: #555; cursor: pointer;">個人資訊</button>
+    </div>
+
+    <div id="member-content-orders">
+        <div id="order-list-empty" style="text-align: center; padding: 40px; color: #888;">
+            <p>正在載入您的訂單紀錄...</p>
+        </div>
+        <div id="order-list-container"></div>
+    </div>
+
+    <div id="member-content-profile" style="display: none;">
+        <div style="background: white; padding: 20px; border-radius: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
+            <p><strong>會員姓名：</strong> <span id="profile-display-name">---</span></p>
+            <p><strong>電子郵件：</strong> <span id="profile-display-email">---</span></p>
+            <p style="color: #888; font-size: 0.9rem;">* 個人資訊修改功能開發中</p>
+        </div>
+    </div>
+</section>
+
 <section id="about-section" class="about">
     <div class="container">
         <div class="about-content">
