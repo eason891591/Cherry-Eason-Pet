@@ -1,5 +1,5 @@
 // ⚠️ 請務必確認這段網址與你 Google Apps Script 部署後的「網頁應用程式網址」完全一致
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbydSZYr9RPcCN1PIRtzAvbddW1KOUYET7iWsNhll05L2-TpH5ZEHIqqa4o1fP8A7Zwx/exec';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbya0xz2GwNnXZz_xAP4BD-6TpScHazcjXRvnxPufqV-N7qQthCCj3sg6M4P1NMXwt6U/exec';
 
 let allProducts = []; 
 let cart = JSON.parse(localStorage.getItem('cherryEasonCart')) || [];
@@ -207,7 +207,8 @@ function checkout() {
 }
 function closeModal() { document.getElementById("checkout-modal").style.display = "none"; }
 
-function submitOrder() {
+// 🌟 改為 async 函式，以確保能按順序拿到 Firebase ID
+async function submitOrder() {
     if (isSubmitting) return;
 
     const orderUser = window.firebaseAuth?.currentUser; 
@@ -240,46 +241,52 @@ function submitOrder() {
     btn.innerText = "🚀 訂單傳送中...";
     btn.disabled = true;
 
-    const params = new URLSearchParams();
-    params.append("name", name);
-    params.append("phone", phone);
-    params.append("email", email);
-    params.append("delivery_method", delivery);
-    params.append("address", finalAddress);
-    params.append("payment_method", payment);
-    params.append("note", note);
-    params.append("uid", memberUid);
-    params.append("order_details", order_details_text);
-    params.append("total_price", `NT$${total_sum}`);
+    try {
+        let currentOrderId = "無ID_" + new Date().getTime(); // 預設值
 
-    let firestorePromise = Promise.resolve();
-    if (orderUser && window.db && window.firestoreTools) {
-        firestorePromise = window.firestoreTools.addDoc(window.firestoreTools.collection(window.db, "orders"), {
-            userId: orderUser.uid,
-            userName: name,
-            userEmail: email,
-            details: order_details_text, 
-            items: cart, // 🌟 新增：完整存入購物車陣列供歷史訂單讀取
-            totalAmount: total_sum, // 🌟 新增：存入純數字總額
-            total: `NT$${total_sum}`,
-            address: finalAddress,
-            deliveryMethod: delivery,
-            paymentMethod: payment,
-            status: "訂單處理中",
-            createdAt: window.firestoreTools.serverTimestamp()
-        });
-    }
+        // 1. 先將訂單存入 Firebase，並取得產生的 ID
+        if (orderUser && window.db && window.firestoreTools) {
+            const docRef = await window.firestoreTools.addDoc(window.firestoreTools.collection(window.db, "orders"), {
+                userId: orderUser.uid,
+                userName: name,
+                userEmail: email,
+                details: order_details_text, 
+                items: cart, 
+                totalAmount: total_sum, 
+                total: `NT$${total_sum}`,
+                address: finalAddress,
+                deliveryMethod: delivery,
+                paymentMethod: payment,
+                status: "訂單處理中", // 🌟 統一初始狀態
+                createdAt: window.firestoreTools.serverTimestamp()
+            });
+            currentOrderId = docRef.id; // 🌟 成功拿到 Firebase 的訂單 ID
+        }
 
-    Promise.all([
-        fetch(SCRIPT_URL, { 
+        // 2. 準備傳送給 Google Sheets 的資料
+        const params = new URLSearchParams();
+        params.append("orderId", currentOrderId); // 🌟 新增：傳送 ID
+        params.append("name", name);
+        params.append("phone", phone);
+        params.append("email", email);
+        params.append("delivery_method", delivery);
+        params.append("address", finalAddress);
+        params.append("payment_method", payment);
+        params.append("note", note);
+        params.append("uid", memberUid);
+        params.append("order_details", order_details_text);
+        params.append("total_price", `NT$${total_sum}`);
+        params.append("status", "訂單處理中"); // 🌟 新增：傳送初始狀態
+
+        // 3. 傳送到 Apps Script
+        await fetch(SCRIPT_URL, { 
             method: 'POST', 
             body: params.toString(), 
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
             mode: 'no-cors' 
-        }),
-        firestorePromise
-    ])
-    .then(() => {
+        });
+
+        // 4. 儲存個人資訊供下次使用
         if (orderUser) {
             const profile = {
                 phone: phone,
@@ -288,24 +295,23 @@ function submitOrder() {
             };
             localStorage.setItem(`profile_${orderUser.uid}`, JSON.stringify(profile));
         }
+
         alert("🎉 訂單成功送出！");
         cart = [];
         saveAndUpdate();
         closeModal();
         document.getElementById('checkout-form').reset();
         window.location.reload(); 
-    })
-    .catch(err => {
+
+    } catch (err) {
         console.error("傳送失敗:", err);
-        alert("❌ 訂單傳送失敗");
-    })
-    .finally(() => {
+        alert("❌ 訂單傳送失敗，請稍後再試");
+    } finally {
         isSubmitting = false;
         btn.innerText = "🚀 確認送出訂單";
         btn.disabled = false;
-    });
+    }
 }
-
 // 1. 解決手機版「商品分類」下拉選單點擊後不會自動收合的問題
 document.querySelectorAll('.dropdown-content a').forEach(link => {
     link.addEventListener('click', () => {
