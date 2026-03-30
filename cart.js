@@ -46,7 +46,6 @@ window.onload = () => {
     });
 };
 
-// ✨ 修改：渲染商品卡片（加入對齊用的佔位符）
 function renderProducts(products) {
     const grid = document.getElementById('product-grid');
     if (!grid) return;
@@ -57,7 +56,6 @@ function renderProducts(products) {
 
     grid.innerHTML = products.map(p => {
         const variants = p.variants ? p.variants.split(',').map(v => v.trim()) : [];
-        // ✨ 如果沒有規格，補一個隱形的 div 佔位 (高度 40px + margin 20px = 60px)
         const variantHtml = variants.length > 0 ? `
             <select id="variant-${p.name.replace(/\s+/g, '-')}" class="variant-select">
                 ${variants.map(v => `<option value="${v}">${v}</option>`).join('')}
@@ -172,54 +170,31 @@ function showToast(msg) {
 }
 
 function checkout() {
-    // 1. 檢查購物車是否有東西
-    if (cart.length === 0) {
-        alert("購物車內沒有商品喔！🐾");
-        return;
-    }
+    if (cart.length === 0) return alert("購物車內沒有商品喔！🐾");
 
-    // 2. 獲取當前登入狀態 (加上全域變數檢查)
     const auth = window.firebaseAuth || (typeof getAuth === 'function' ? getAuth() : null);
     const currentUser = auth ? auth.currentUser : null;
 
-    console.log("當前登入狀態:", currentUser); // 👈 偵錯用：按下 F12 可以看到有沒有抓到人
-
-    // 3. 強制攔截邏輯
     if (!currentUser) {
-        // 顯示提示訊息
         showToast("📢 請先登入會員才能結帳！");
-        
-        // 彈出確認視窗引導登入
         if (confirm("為了記錄您的訂單，結帳前請先登入 Google 帳號。\n現在要跳轉至登入頁面嗎？")) {
-            if (typeof window.handleAuth === 'function') {
-                window.handleAuth();
-            } else {
-                alert("登入功能初始化中，請稍候再試或重新整理網頁。");
-            }
+            if (typeof window.handleAuth === 'function') window.handleAuth();
         }
-        return; // 🛑 關鍵：絕對不讓程式跑下去
+        return; 
     }
 
-    // 4. 通過檢查，開啟結帳視窗
-    console.log("身分驗證成功，開啟結帳視窗");
-    
-    // 關閉購物車側邊欄
     const sidebar = document.getElementById("cart-sidebar");
     if (sidebar) sidebar.classList.remove("open");
 
-    // 顯示結帳彈窗
     const modal = document.getElementById("checkout-modal");
     if (modal) {
         modal.style.display = "flex";
-        
-        // 自動帶入資料
         setTimeout(() => {
             const nameInput = document.getElementById("name");
             const emailInput = document.getElementById("email");
             if (nameInput) nameInput.value = currentUser.displayName || "";
             if (emailInput) emailInput.value = currentUser.email || "";
             
-            // 讀取 localStorage 紀錄
             const saved = localStorage.getItem(`profile_${currentUser.uid}`);
             if (saved) {
                 const profile = JSON.parse(saved);
@@ -283,12 +258,14 @@ function submitOrder() {
             userId: orderUser.uid,
             userName: name,
             userEmail: email,
-            details: order_details_text,
+            details: order_details_text, 
+            items: cart, // 🌟 新增：完整存入購物車陣列供歷史訂單讀取
+            totalAmount: total_sum, // 🌟 新增：存入純數字總額
             total: `NT$${total_sum}`,
             address: finalAddress,
             deliveryMethod: delivery,
             paymentMethod: payment,
-            status: "pending",
+            status: "訂單處理中",
             createdAt: window.firestoreTools.serverTimestamp()
         });
     }
@@ -329,63 +306,38 @@ function submitOrder() {
     });
 }
 
-// ==========================================
-// 🌟 介面優化與互動效果區
-// ==========================================
-
 // 1. 解決手機版「商品分類」下拉選單點擊後不會自動收合的問題
 document.querySelectorAll('.dropdown-content a').forEach(link => {
     link.addEventListener('click', () => {
         const dropdownContent = link.closest('.dropdown-content');
         if (dropdownContent) {
             dropdownContent.style.display = 'none';
-            setTimeout(() => {
-                dropdownContent.style.display = '';
-            }, 300);
+            setTimeout(() => { dropdownContent.style.display = ''; }, 300);
         }
     });
 });
 
-// 2. 控制「回到最上方」按鈕的淡出與淡入
 window.addEventListener('scroll', () => {
     const topBtn = document.getElementById('back-to-top');
     if (topBtn) {
-        if (window.scrollY > 300) {
-            topBtn.classList.add('show');
-        } else {
-            topBtn.classList.remove('show');
-        }
+        if (window.scrollY > 300) { topBtn.classList.add('show'); } 
+        else { topBtn.classList.remove('show'); }
     }
 });
 
-// ==========================================
-// 🌟 核心修復：手機版導覽列控制
-// ==========================================
-
-// 1. 切換選單開關
 function toggleMenu() {
     const nav = document.getElementById('mobile-nav');
     const overlay = document.getElementById('nav-overlay');
-    
     if (nav && overlay) {
         nav.classList.toggle('active');
         overlay.classList.toggle('active');
-
-        // 防止開啟選單時後方頁面還能滾動
-        if (nav.classList.contains('active')) {
-            document.body.style.overflow = 'hidden';
-        } else {
-            document.body.style.overflow = '';
-        }
+        document.body.style.overflow = nav.classList.contains('active') ? 'hidden' : '';
     }
 }
 
-// 2. 處理導覽連結點擊 (點擊後自動收合選單)
 function handleNavClick() {
     const nav = document.getElementById('mobile-nav');
     const overlay = document.getElementById('nav-overlay');
-    
-    // 如果目前是開啟狀態（active），則將其關閉
     if (nav && nav.classList.contains('active')) {
         nav.classList.remove('active');
         overlay.classList.remove('active');
@@ -393,47 +345,36 @@ function handleNavClick() {
     }
 }
 
-// 3. 確保 filterProducts 執行時也會觸發收合 (可選，但建議加上)
-// 原有的 filterProducts 函數結尾可以加上 handleNavClick();
-
 // ==========================================
 // 👤 會員中心邏輯 (Member Center)
 // ==========================================
 
-// 1. 顯示會員中心
 function showMemberCenter() {
     const user = window.firebaseAuth?.currentUser;
-    
     if (!user) {
         showToast("📢 請先登入會員喔！");
         if (window.handleAuth) window.handleAuth();
         return;
     }
 
-    // 隱藏其他區塊，只顯示會員區
     document.getElementById('shop').style.display = 'none';
     document.getElementById('about-section').style.display = 'none';
     document.getElementById('member-section').style.display = 'block';
     
-    // 確保回到頁面頂端
     window.scrollTo({ top: 0, behavior: 'smooth' });
 
-    // 預填個人資訊分頁
     document.getElementById('profile-display-name').innerText = user.displayName || "未設定";
     document.getElementById('profile-display-email').innerText = user.email || "未設定";
 
-    // 抓取訂單
     fetchUserOrders(user.uid);
 }
 
-// 2. 返回商店首頁
 function backToShop() {
     document.getElementById('shop').style.display = 'block';
     document.getElementById('about-section').style.display = 'block';
     document.getElementById('member-section').style.display = 'none';
 }
 
-// 3. 切換內部頁籤 (訂單 vs 個人資訊)
 function switchMemberTab(tab) {
     const orderContent = document.getElementById('member-content-orders');
     const profileContent = document.getElementById('member-content-profile');
@@ -453,21 +394,22 @@ function switchMemberTab(tab) {
     }
 }
 
-// 4. 從 Firebase 抓取屬於該用戶的訂單
+// 🌟 強化版：從 Firebase 抓取訂單並手動排序 (防報錯機制)
 async function fetchUserOrders(uid) {
     const container = document.getElementById('order-list-container');
     const emptyMsg = document.getElementById('order-list-empty');
     
-    container.innerHTML = ""; // 清空舊內容
+    container.innerHTML = ""; 
     emptyMsg.style.display = 'block';
     emptyMsg.innerText = "🐾 正在努力讀取您的訂單紀錄...";
 
     try {
-        const { query, collection, where, orderBy, getDocs } = window.firestoreTools; // 從全域獲取工具
+        const { query, collection, where, getDocs } = window.firestoreTools; 
+        
+        // 拿掉 orderBy 避免需要額外設定索引
         const q = query(
             collection(window.db, "orders"),
-            where("userId", "==", uid),
-            orderBy("createdAt", "desc") // 按時間排序：新 -> 舊
+            where("userId", "==", uid)
         );
 
         const querySnapshot = await getDocs(q);
@@ -479,22 +421,34 @@ async function fetchUserOrders(uid) {
 
         emptyMsg.style.display = 'none';
         
-        querySnapshot.forEach((doc) => {
-            const data = doc.data();
+        // 轉為陣列並進行手動排序（最新訂單在上）
+        let orders = [];
+        querySnapshot.forEach(doc => {
+            orders.push({ id: doc.id, ...doc.data() });
+        });
+        orders.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+        
+        // 渲染訂單卡片
+        orders.forEach((data) => {
             const date = data.createdAt ? new Date(data.createdAt.seconds * 1000).toLocaleDateString() : "處理中";
             
-            // 建立訂單卡片 HTML
+            // 兼容舊格式與新格式
+            const orderTotal = data.totalAmount ? `NT$ ${data.totalAmount}` : (data.total || "處理中");
+            const orderDetails = data.details || (data.items ? data.items.map(i => `${i.name}(${i.variant || '單一規格'}) x ${i.qty}`).join(', ') : "無詳細資訊");
+
             const orderHtml = `
-                <div style="background: white; border-radius: 12px; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); border-left: 5px solid #FFD27F;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                        <span style="font-size: 0.85rem; color: #888;">日期：${date}</span>
-                        <span style="background: #FFF4E0; color: #D48806; padding: 3px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: bold;">
-                            ${data.status || '處理中'}
+                <div style="background: white; border-radius: 12px; padding: 15px; margin-bottom: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); border-left: 6px solid #FFD27F;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <span style="font-size: 0.8rem; color: #999;">📅 日期：${date}</span>
+                        <span style="background: #FFF4E0; color: #D48806; padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: bold; border: 1px solid #FFE5B4;">
+                            ${data.status || '訂單處理中'}
                         </span>
                     </div>
-                    <div style="font-weight: bold; color: #5C3A00; margin-bottom: 5px;">訂單編號：${doc.id.substring(0, 8).toUpperCase()}</div>
-                    <div style="font-size: 0.9rem; color: #555;">金額：NT$ ${data.totalAmount}</div>
-                    <div style="font-size: 0.85rem; color: #777; margin-top: 8px;">內容：${data.items.map(i => i.name).join('、')}</div>
+                    <div style="font-weight: bold; color: #5C3A00; font-size: 1rem; margin-bottom: 5px;">訂單編號：#${data.id.substring(0, 8).toUpperCase()}</div>
+                    <div style="font-size: 0.95rem; color: #333; font-weight: bold;">總金額：<span style="color: #FF4500;">${orderTotal}</span></div>
+                    <div style="font-size: 0.85rem; color: #666; margin-top: 10px; padding-top: 10px; border-top: 1px dashed #eee;">
+                        📦 內容：${orderDetails}
+                    </div>
                 </div>
             `;
             container.innerHTML += orderHtml;

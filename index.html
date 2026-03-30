@@ -5,8 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cherry&Eason Pet | 寵物用品店</title>
     <link rel="stylesheet" href="style.css">
-<link rel="icon" href="favicon.png" type="image/png">
-
+    <link rel="icon" href="favicon.png" type="image/png">
 </head>
 <body id="top"> 
 
@@ -15,9 +14,7 @@
 <header class="header">
     <div class="header-top">
         <div class="menu-toggle" id="menu-toggle" onclick="toggleMenu()">☰</div>
-        
         <div class="logo">Cherry&Eason Pet</div>
-        
         <span class="cart-icon" id="cart-icon" onclick="toggleCart()" style="cursor: pointer;">
             🛒 <span id="cart-count">0</span>
         </span>
@@ -45,7 +42,7 @@
 
         <div id="auth-section">
             <img id="user-avatar" src="" style="display: none; width: 28px; height: 28px; border-radius: 50%; border: 1px solid #FFD27F; vertical-align: middle; margin-right: 5px;">
-<span id="user-info" onclick="showMemberCenter()" style="font-size: 14px; color: #5C3A00; font-weight: bold; cursor: pointer; text-decoration: underline;">訪客</span>
+            <span id="user-info" onclick="showMemberCenter()" style="font-size: 14px; color: #5C3A00; font-weight: bold; cursor: pointer; text-decoration: underline;">訪客</span>
             <button id="auth-btn" onclick="handleAuth()">登入</button>
         </div>
     </nav>
@@ -90,7 +87,7 @@
         <div style="background: white; padding: 20px; border-radius: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
             <p><strong>會員姓名：</strong> <span id="profile-display-name">---</span></p>
             <p><strong>電子郵件：</strong> <span id="profile-display-email">---</span></p>
-            <p style="color: #888; font-size: 0.9rem;">* 個人資訊修改功能開發中</p>
+            <p style="color: #888; font-size: 0.9rem;">* 個人資訊將於結帳時自動帶入</p>
         </div>
     </div>
 </section>
@@ -203,7 +200,8 @@
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-    import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    // 🌟 修改點：補齊了 query, where, getDocs, orderBy
+    import { getFirestore, collection, addDoc, serverTimestamp, query, where, getDocs, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
   
     const firebaseConfig = {
       apiKey: "AIzaSyDf663zw1zdWVCuPkN9hqtIQTE6dI4zaog",
@@ -220,10 +218,10 @@
     const db = getFirestore(app);
     const provider = new GoogleAuthProvider();
     
-    // 將 Firebase 功能暴露給全域環境，讓 cart.js 可以使用
+    // 🌟 修改點：將完整的 Firestore 工具匯出給全域環境
     window.firebaseAuth = auth;
     window.db = db;
-    window.firestoreTools = { collection, addDoc, serverTimestamp };
+    window.firestoreTools = { collection, addDoc, serverTimestamp, query, where, getDocs, orderBy };
   
     window.handleAuth = async () => {
       if (!auth.currentUser) {
