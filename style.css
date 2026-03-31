@@ -1,9 +1,9 @@
 /* --- 基礎設定 --- */
 html { scroll-behavior: smooth; }
 body { 
-    font-family: 'Segoe UI', Arial, sans-serif; 
+    font-family: 'Noto Sans TC', 'Segoe UI', sans-serif; 
     margin: 0; 
-    padding-top: 180px; 
+    padding-top: 145px; 
     background: #fffaf0; 
     color: #5C3A00; 
 }
@@ -23,7 +23,10 @@ body {
 .header { 
     position: fixed; top: 0; width: 100%; background: #FFD27F !important; 
     display: flex; flex-direction: column; align-items: center; padding: 10px 0; 
-    z-index: 9999; box-shadow: 0 2px 5px rgba(0,0,0,0.1); 
+    z-index: 9999; box-shadow: 0 2px 5px rgba(0,0,0,0.1); background: rgba(255, 210, 127, 0.9) !important; /* 變成 90% 透明度 */
+    backdrop-filter: blur(10px); /* 關鍵：背後模糊 */
+background: linear-gradient(to bottom, #FFD27F, #ffc866) !important;
+    border-bottom: 2px solid #f0b44d; /* 增加一條稍深的底線 */
 }
 .header-top { width: 90%; display: flex; justify-content: center; position: relative; }
 .logo { font-size: 26px; font-weight: bold; color: #5C3A00; }
@@ -56,14 +59,76 @@ body {
 .search-bar { width: 90%; max-width: 500px; margin-top: 10px; }
 .search-bar input { width: 100%; padding: 10px; border-radius: 20px; border: 1px solid #ddd; outline: none; }
 
+.search-bar input {
+    border: 2px solid transparent; /* 預設隱藏邊框 */
+    background-color: rgba(255, 255, 255, 0.9);
+    transition: all 0.3s ease;
+}
+
+.search-bar input:focus {
+    border-color: #5C3A00;
+    box-shadow: 0 0 10px rgba(92, 58, 0, 0.1);
+    background-color: #fff;
+}
+
 /* 隱藏手機版專用元素 */
 .menu-toggle, .nav-close, #nav-overlay { display: none; }
 
 
-/* --- Hero 區塊 --- */
-.hero { background: #fdf5e6; padding: 60px 0; text-align: center; }
-.hero h1 { font-size: 2.5rem; color: #5C3A00; margin-bottom: 10px; }
+/* --- Hero 區塊 (加入抽象木紋材質) --- */
+.hero { 
+    /* 1. 基礎底色 (原本的溫暖色) */
+    background-color: #fdf5e6; 
+    
+    /* 2. 使用多重漸層生成木紋質感 */
+    background-image: 
+        /* 細微的橫向木紋線條 */
+        repeating-linear-gradient(
+            0deg,
+            rgba(160, 100, 40, 0.03) 0px,
+            rgba(160, 100, 40, 0.03) 1px,
+            transparent 1px,
+            transparent 2px
+        ),
+        /* 較寬的木節理線條 */
+        repeating-linear-gradient(
+            0deg,
+            rgba(160, 100, 40, 0.02) 0px,
+            rgba(160, 100, 40, 0.02) 4px,
+            transparent 4px,
+            transparent 8px
+        ),
+        /* 垂直方向的深淺變化 */
+        linear-gradient(
+            90deg,
+            #fdf5e6 0%,
+            #faefe0 50%,
+            #fdf5e6 100%
+        );
 
+    padding: 80px 0; /* 稍微增加上下內距，讓材質更顯眼 */
+    text-align: center; 
+    border-bottom: 1px solid #FFEDCC; /* 底部加一條淡淡的邊框區隔 */
+    
+    /* 3. 增加一點微小的陰影，讓 Hero 更有立體感 */
+    box-shadow: inset 0 -10px 20px rgba(0,0,0,0.02);
+}
+
+/* 稍微調整標題與文字顏色，讓它們在木紋上更清晰 */
+.hero h1 { 
+    font-size: 2.8rem; /* 標題稍微放大一點點 */
+    color: #4D3200;    /* 深一點的咖啡色 */
+    margin-bottom: 15px; 
+    text-shadow: 1px 1px 0 rgba(255, 255, 255, 0.5); /* 文字加一點白邊回饋 */
+}
+
+.hero p {
+    color: #5C3A00;
+    font-size: 1.1rem;
+    max-width: 600px;
+    margin: 0 auto; /* 讓文字區塊置中 */
+    line-height: 1.6;
+}
 /* --- 商品網格 (按鈕對齊核心) --- */
 .product-grid { 
     display: flex; flex-wrap: wrap; gap: 20px; justify-content: center; padding: 20px 0; 
@@ -75,12 +140,31 @@ body {
     justify-content: space-between; /* 關鍵：推開上下內容 */
     min-height: 480px; box-sizing: border-box; transition: 0.3s; 
 }
+.product:hover {
+    transform: translateY(-5px); /* 輕微上浮，不影響其他卡片位置 */
+    box-shadow: 0 8px 20px rgba(92, 58, 0, 0.12); /* 陰影變深一點點 */
+    border: 1px solid #FFD27F; /* 滑鼠移上去時邊框變亮 */
+}
+
 .product img { width: 100%; aspect-ratio: 1/1; object-fit: contain; border-radius: 10px; }
+.product img {
+    padding: 10px; /* 增加一點內縮留白 */
+    background: #fff; /* 確保圖片背後是純白 */
+    border-radius: 12px;
+}
 .product h3 { height: 2.8em; overflow: hidden; margin: 15px 0 10px 0; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
 
 .variant-select { width: 100%; height: 46px; padding: 8px; margin-bottom: 10px; border: 1px solid #FFD27F; border-radius: 8px; background: white; }
 .product-price { color: #FF4500; font-weight: bold; font-size: 1.2rem; margin-bottom: 15px; }
 .product button { width: 100%; padding: 12px; background: #FFD27F; border: none; border-radius: 20px; font-weight: bold; cursor: pointer; }
+.product button:hover {
+    background: #ffc45d; /* 懸浮時顏色深一點點 */
+}
+
+.product button:active {
+    transform: scale(0.96); /* 按下去時微縮小，產生物理回饋感 */
+}
+
 
 /* --- About Section --- */
 .about { background-color: #FFF5E6 !important; padding: 80px 20px !important; text-align: center !important; margin-top: 40px !important; border-top: 1px solid #FFEDCC; line-height: 1.8 !important; color: #5C3A00 !important;}
