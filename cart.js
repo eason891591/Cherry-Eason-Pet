@@ -1,4 +1,4 @@
-// ⚠️ 請務必確認這段網址與你 Google Apps Script 部署後的「網頁應用程式網址」完全一致
+// ⚠️ 確保此網址與你 GAS 最新部署的網址一致
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbya0xz2GwNnXZz_xAP4BD-6TpScHazcjXRvnxPufqV-N7qQthCCj3sg6M4P1NMXwt6U/exec';
 
 let allProducts = []; 
@@ -131,7 +131,6 @@ function updateCart() {
     if (countEl) countEl.innerText = qtyTotal;
 }
 
-// 🌟 修改點：切換分類時自動執行回商店邏輯
 function filterProducts(category) {
     backToShop(); 
     const filtered = (category === 'all') ? allProducts : allProducts.filter(p => p.category === category);
@@ -209,6 +208,7 @@ function checkout() {
 }
 function closeModal() { document.getElementById("checkout-modal").style.display = "none"; }
 
+// 🌟 修正點：嚴格按照順序，先存 Firebase 拿 ID，再存 Google Sheets
 async function submitOrder() {
     if (isSubmitting) return;
 
@@ -245,26 +245,29 @@ async function submitOrder() {
     try {
         let currentOrderId = "無ID_" + new Date().getTime();
 
+        // 1. 先存入 Firebase 取得真正的 ID
         if (orderUser && window.db && window.firestoreTools) {
             const docRef = await window.firestoreTools.addDoc(window.firestoreTools.collection(window.db, "orders"), {
                 userId: orderUser.uid,
-                userName: name,
-                userEmail: email,
-                details: order_details_text, 
-                items: cart, 
-                totalAmount: total_sum, 
+                userName: name || "",
+                userEmail: email || "",
+                details: order_details_text || "", 
+                items: cart || [], 
+                totalAmount: total_sum || 0, 
                 total: `NT$${total_sum}`,
-                address: finalAddress,
-                deliveryMethod: delivery,
-                paymentMethod: payment,
+                address: finalAddress || "",
+                deliveryMethod: delivery || "",
+                paymentMethod: payment || "",
                 status: "訂單處理中",
                 createdAt: window.firestoreTools.serverTimestamp()
             });
-            currentOrderId = docRef.id;
+            currentOrderId = docRef.id; // 👈 成功取得 ID
+            console.log("Firestore 建立成功，ID:", currentOrderId);
         }
 
+        // 2. 將包含 Firebase ID 的資料傳給 Google Sheets
         const params = new URLSearchParams();
-        params.append("orderId", currentOrderId);
+        params.append("orderId", currentOrderId); // 👈 A欄就不會是空號碼了
         params.append("name", name);
         params.append("phone", phone);
         params.append("email", email);
@@ -284,6 +287,7 @@ async function submitOrder() {
             mode: 'no-cors' 
         });
 
+        // 3. 儲存用戶資料供下次快速填寫
         if (orderUser) {
             const profile = {
                 phone: phone,
@@ -301,8 +305,8 @@ async function submitOrder() {
         window.location.reload(); 
 
     } catch (err) {
-        console.error("傳送失敗:", err);
-        alert("❌ 訂單傳送失敗，請稍後再試");
+        console.error("訂單傳送發生錯誤:", err);
+        alert("❌ 訂單傳送失敗，請稍後再試或聯繫客服。");
     } finally {
         isSubmitting = false;
         btn.innerText = "🚀 確認送出訂單";
@@ -348,11 +352,6 @@ function handleNavClick() {
     }
 }
 
-// ==========================================
-// 👤 會員中心邏輯 (Member Center)
-// ==========================================
-
-// 🌟 修改點：進入會員中心時隱藏商店、品牌故事與 Hero 區
 function showMemberCenter() {
     const user = window.firebaseAuth?.currentUser;
     if (!user) {
@@ -379,7 +378,6 @@ function showMemberCenter() {
     fetchUserOrders(user.uid);
 }
 
-// 🌟 修改點：回到商店時恢復顯示所有區塊
 function backToShop() {
     const shop = document.getElementById('shop');
     const about = document.getElementById('about-section');
