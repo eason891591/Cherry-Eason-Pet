@@ -31,11 +31,8 @@
             <a href="javascript:void(0)" onclick="backToShop(); filterProducts('hot'); handleNavClick()">🔥 熱門商品</a>
             <a href="javascript:void(0)" onclick="backToShop(); filterProducts('all'); handleNavClick()">🌟 所有商品</a>
             <hr style="border: 0; border-top: 1px solid #eee; margin: 5px 0;">
-            <a href="javascript:void(0)" onclick="backToShop(); filterProducts('cat-treats'); handleNavClick()">🐱 貓貓零食</a>
-            <a href="javascript:void(0)" onclick="backToShop(); filterProducts('dog-treats'); handleNavClick()">🐶 狗狗零食</a>
-            <a href="javascript:void(0)" onclick="backToShop(); filterProducts('cat-supplies'); handleNavClick()">🐈 貓貓用品</a>
-            <a href="javascript:void(0)" onclick="backToShop(); filterProducts('dog-supplies'); handleNavClick()">🐕 狗狗用品</a>
-            <a href="javascript:void(0)" onclick="backToShop(); filterProducts('all-pets'); handleNavClick()">🐾 貓狗通用</a>
+            <a href="javascript:void(0)" onclick="backToShop(); filterProducts('cat'); handleNavClick()">🐱 貓貓專區</a>
+            <a href="javascript:void(0)" onclick="backToShop(); filterProducts('dog'); handleNavClick()">🐶 狗狗專區</a>
         </div>
     </div>
 
@@ -62,7 +59,7 @@
 
 <main id="shop" class="shop-container">
     <div class="container">
-        <h2 id="current-category-name" style="text-align: center; color: #5C3A00; margin-top: 40px;">🌟 精選所有商品</h2>
+        <h2 id="current-category-name" style="text-align: center; color: #5C3A00; margin-top: 40px;">🌟 所有商品</h2>
         <div id="product-grid" class="product-grid"></div>
     </div>
 </main>
@@ -202,7 +199,6 @@
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-    // 🌟 修改點：補齊了 query, where, getDocs, orderBy
     import { getFirestore, collection, addDoc, serverTimestamp, query, where, getDocs, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
   
     const firebaseConfig = {
@@ -220,7 +216,6 @@
     const db = getFirestore(app);
     const provider = new GoogleAuthProvider();
     
-    // 🌟 修改點：將完整的 Firestore 工具匯出給全域環境
     window.firebaseAuth = auth;
     window.db = db;
     window.firestoreTools = { collection, addDoc, serverTimestamp, query, where, getDocs, orderBy };

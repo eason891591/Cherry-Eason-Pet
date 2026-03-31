@@ -133,7 +133,39 @@ function updateCart() {
 
 function filterProducts(category) {
     backToShop(); 
-    const filtered = (category === 'all') ? allProducts : allProducts.filter(p => p.category === category);
+    
+    let filtered;
+    let titleText = "🌟 所有商品"; // 預設標題
+
+    if (category === 'all') {
+        filtered = allProducts;
+        titleText = "🌟 所有商品";
+    } 
+    else if (category === 'hot') {
+        // 先找尋表格中有標記 hot 欄位為 y, Y 或 1 的商品
+        filtered = allProducts.filter(p => p.hot === 'y' || p.hot === 'Y' || p.hot === 1 || p.hot === '1');
+        
+        // 如果你的表格還沒建立 hot 欄位，自動抓前 8 筆商品避免畫面全空
+        if (filtered.length === 0) {
+            filtered = allProducts.slice(0, 8);
+        }
+        titleText = "🔥 熱門商品";
+    }
+    else {
+        // 貓貓(cat) 或 狗狗(dog) 分類邏輯
+        filtered = allProducts.filter(p => {
+            const productCat = (p.category || "").toLowerCase(); 
+            const targetCat = category.toLowerCase();            
+            // 完全等於目標，或是通用(all)的都會顯示
+            return productCat === targetCat || productCat === 'all';
+        });
+        titleText = category === 'cat' ? "🐱 貓貓專區" : "🐶 狗狗專區";
+    }
+
+    // 動態更新商品區標題
+    const titleEl = document.getElementById('current-category-name');
+    if (titleEl) titleEl.innerText = titleText;
+
     renderProducts(filtered);
     document.getElementById('shop')?.scrollIntoView({ behavior: 'smooth' });
 }
@@ -208,7 +240,7 @@ function checkout() {
 }
 function closeModal() { document.getElementById("checkout-modal").style.display = "none"; }
 
-// 🌟 修正點：嚴格按照順序，先存 Firebase 拿 ID，再存 Google Sheets
+// 🌟 嚴格按照順序，先存 Firebase 拿 ID，再存 Google Sheets
 async function submitOrder() {
     if (isSubmitting) return;
 
@@ -261,13 +293,13 @@ async function submitOrder() {
                 status: "訂單處理中",
                 createdAt: window.firestoreTools.serverTimestamp()
             });
-            currentOrderId = docRef.id; // 👈 成功取得 ID
+            currentOrderId = docRef.id; 
             console.log("Firestore 建立成功，ID:", currentOrderId);
         }
 
         // 2. 將包含 Firebase ID 的資料傳給 Google Sheets
         const params = new URLSearchParams();
-        params.append("orderId", currentOrderId); // 👈 A欄就不會是空號碼了
+        params.append("orderId", currentOrderId);
         params.append("name", name);
         params.append("phone", phone);
         params.append("email", email);
