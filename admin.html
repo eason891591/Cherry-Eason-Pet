@@ -20,7 +20,7 @@
 <body>
 <div class="upload-container">
     <h2>🐾 圖片快速上傳工具</h2>
-    <p style="font-size: 0.9rem; color: #8B7355;">選取照片 ➔ 自動上傳 ➔ 取得直連網址 ➔ 貼回 Sheets</p>
+    <p style="font-size: 0.9rem; color: #8B7355;">選取照片 ➔ 自動上傳至 Google Drive ➔ 自動複製網址</p>
     <div class="drop-zone" onclick="document.getElementById('file-input').click()">
         <span style="font-size: 2.5rem;">📷</span>
         <p style="margin: 10px 0 0 0; font-weight: bold;">點擊選擇相簿照片</p>
@@ -36,6 +36,8 @@
 </div>
 
 <script>
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbwQKEQxAGMGvSQEDCLrhhBqN5H64vEv1nL-yNAgbpNaJcrJ-YO2zG7iSSwLDP0dp_12/exec"; 
+
     const fileInput = document.getElementById('file-input');
     const previewImg = document.getElementById('image-preview');
     const uploadBtn = document.getElementById('upload-btn');
@@ -59,47 +61,48 @@
         }
     });
 
-    uploadBtn.addEventListener('click', async () => {
+    uploadBtn.addEventListener('click', () => {
         if (!selectedFile) return;
         uploadBtn.disabled = true;
         statusMsg.style.color = "#5C3A00";
-        statusMsg.innerText = "正在處理圖片並上傳...";
+        statusMsg.innerText = "正在處理並上傳至雲端...";
 
-        const formData = new FormData();
-        formData.append('image', selectedFile);
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const base64Data = e.target.result.split(',')[1];
+            
+            const payload = {
+                filename: selectedFile.name,
+                mimeType: selectedFile.type,
+                fileData: base64Data
+            };
 
-        try {
-            // 使用 Imgur 公用 Client-ID 進行無痛上傳
-            const res = await fetch('https://api.imgur.com/3/image', {
+            fetch(GAS_URL, {
                 method: 'POST',
-                headers: {
-                    Authorization: 'Client-ID 546c25a59c58ad7'
-                },
-                body: formData
+                body: JSON.stringify(payload)
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === "success") {
+                    urlOutput.innerText = data.url;
+                    resultBox.style.display = 'block';
+                    statusMsg.style.color = "green";
+                    statusMsg.innerText = "🎉 上傳成功！圖片網址已複製。";
+                    copyToClipboard(data.url);
+                } else {
+                    throw new Error(data.message);
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                statusMsg.style.color = "red";
+                statusMsg.innerText = "❌ 上傳失敗，請檢查 GAS 網址與權限！";
+            })
+            .finally(() => {
+                uploadBtn.disabled = false;
             });
-
-            const data = await res.json();
-
-            if (data.success) {
-                // 取得副檔名為 .jpg 的直連網址
-                const imageUrl = data.data.link;
-
-                urlOutput.innerText = imageUrl;
-                resultBox.style.display = 'block';
-                statusMsg.style.color = "green";
-                statusMsg.innerText = "🎉 上傳成功！網址已複製到剪貼簿。";
-
-                copyToClipboard(imageUrl);
-            } else {
-                throw new Error('上傳失敗');
-            }
-        } catch (err) {
-            console.error(err);
-            statusMsg.style.color = "red";
-            statusMsg.innerText = "❌ 上傳失敗，請確認網路後重試！";
-        } finally {
-            uploadBtn.disabled = false;
-        }
+        };
+        reader.readAsDataURL(selectedFile);
     });
 
     function copyToClipboard(text) {
@@ -107,11 +110,7 @@
         textarea.value = text;
         document.body.appendChild(textarea);
         textarea.select();
-        try {
-            document.execCommand('copy');
-        } catch (err) {
-            console.error('複製失敗', err);
-        }
+        try { document.execCommand('copy'); } catch (err) {}
         document.body.removeChild(textarea);
     }
 </script>
