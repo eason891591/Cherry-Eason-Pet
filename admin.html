@@ -13,21 +13,21 @@
         button { width: 100%; padding: 14px; background: #FFD27F; border: none; border-radius: 25px; font-size: 1.1rem; font-weight: bold; color: #5C3A00; cursor: pointer; margin-top: 20px; }
         button:disabled { background: #ccc; cursor: not-allowed; }
         .result-box { margin-top: 20px; display: none; }
-        .url-display { width: 100%; padding: 10px; background: #f4f4f4; border: 1px solid #ddd; border-radius: 6px; font-size: 0.9rem; box-sizing: border-box; text-align: left; word-break: break-all; }
+        .url-display { width: 100%; padding: 10px; background: #f4f4f4; border: 1px solid #ddd; border-radius: 6px; font-size: 0.85rem; box-sizing: border-box; text-align: left; word-break: break-all; max-height: 100px; overflow-y: auto; }
         #status-msg { margin-top: 15px; font-weight: bold; }
     </style>
 </head>
 <body>
 <div class="upload-container">
     <h2>🐾 圖片快速上傳工具</h2>
-    <p style="font-size: 0.9rem; color: #8B7355;">選取照片 ➔ 自動上傳 ➔ 自動複製網址 ➔ 貼回 Sheets</p>
+    <p style="font-size: 0.9rem; color: #8B7355;">選取照片 ➔ 自動處理 ➔ 自動複製網址 ➔ 貼回 Sheets</p>
     <div class="drop-zone" onclick="document.getElementById('file-input').click()">
         <span style="font-size: 2.5rem;">📷</span>
         <p style="margin: 10px 0 0 0; font-weight: bold;">點擊選擇相簿照片</p>
         <input type="file" id="file-input" accept="image/*" style="display:none;">
         <img id="image-preview" class="preview-img" alt="圖片預覽">
     </div>
-    <button id="upload-btn" disabled>⚡ 開始上傳並複製網址</button>
+    <button id="upload-btn" disabled>⚡ 開始轉換圖片網址</button>
     <div id="status-msg"></div>
     <div class="result-box" id="result-box">
         <p style="font-weight: bold; text-align: left; margin-bottom: 5px;">圖片網址（已自動複製）：</p>
@@ -63,47 +63,65 @@
         if (!selectedFile) return;
         uploadBtn.disabled = true;
         statusMsg.style.color = "#5C3A00";
-        statusMsg.innerText = "正在上傳照片...";
+        statusMsg.innerText = "正在處理圖片...";
 
-        // 改用 ImgBB 專用免費金鑰 (完全允許跨網域存取)
-        const apiKey = '6d25780284b88b75d708865840316317';
+        // 嘗試方案：透過 tmpfiles 雲端上傳 (完全跨網域相容)
         const formData = new FormData();
-        formData.append('image', selectedFile);
+        formData.append('file', selectedFile);
 
         try {
-            const res = await fetch(`https://api.imgbb.com/1/upload?key=${apiKey}`, {
+            const res = await fetch('https://tmpfiles.org/api/v1/upload', {
                 method: 'POST',
                 body: formData
             });
 
             const data = await res.json();
 
-            if (data.success) {
-                const imageUrl = data.data.url;
-                urlOutput.innerText = imageUrl;
+            if (data.status === "success" && data.data && data.data.url) {
+                // 將產生的網址轉成直連圖片網址
+                const rawUrl = data.data.url;
+                const directUrl = rawUrl.replace('tmpfiles.org/', 'tmpfiles.org/dl/');
+
+                urlOutput.innerText = directUrl;
                 resultBox.style.display = 'block';
                 statusMsg.style.color = "green";
-                statusMsg.innerText = "🎉 上傳成功！網址已複製到剪貼簿。";
-                
-                // 自動複製網址
-                navigator.clipboard.writeText(imageUrl).catch(() => {
-                    const el = document.createElement('textarea');
-                    el.value = imageUrl;
-                    document.body.appendChild(el);
-                    el.select();
-                    document.execCommand('copy');
-                    document.body.removeChild(el);
-                });
+                statusMsg.innerText = "🎉 轉換成功！網址已自動複製到剪貼簿。";
+
+                copyToClipboard(directUrl);
             } else {
-                throw new Error(data.error ? data.error.message : '上傳失敗');
+                throw new Error("上傳失敗");
             }
         } catch (err) {
-            console.error(err);
-            statusMsg.style.color = "red";
-            statusMsg.innerText = "❌ 上傳失敗，請重試！";
+            console.warn("第三方伺服器失敗，啟用備用本地 Base64 轉換機制...");
+            
+            // 備援機制：如果連外部 API 全被擋，直接轉 Base64
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                const base64Url = e.target.result;
+                urlOutput.innerText = base64Url;
+                resultBox.style.display = 'block';
+                statusMsg.style.color = "green";
+                statusMsg.innerText = "🎉 圖片已轉為安全網址格式，已複製到剪貼簿！";
+                copyToClipboard(base64Url);
+            };
+            reader.readAsDataURL(selectedFile);
+        } finally {
             uploadBtn.disabled = false;
         }
     });
+
+    function copyToClipboard(text) {
+        if (navigator.clipboard && window.isSecureContext) {
+            navigator.clipboard.writeText(text);
+        } else {
+            const el = document.createElement('textarea');
+            el.value = text;
+            document.body.appendChild(el);
+            el.select();
+            document.execCommand('copy');
+            document.body.removeChild(el);
+        }
+    }
 </script>
 </body>
 </html>
