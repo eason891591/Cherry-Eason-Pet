@@ -64,41 +64,41 @@
         statusMsg.style.color = "#5C3A00";
         statusMsg.innerText = "正在上傳照片...";
 
+        // ImgBB 免費 API Client Key (穩定支援跨網域直連)
+        const apiKey = '6d25780284b88b75d708865840316317'; 
+
         const formData = new FormData();
-        formData.append('reqtype', 'fileupload');
-        formData.append('fileToUpload', selectedFile);
+        formData.append('image', selectedFile);
 
         try {
-            // 使用完全免 API Key 且支援跨網域的免費圖床
-            const res = await fetch('https://catbox.moe/user/api.php', {
+            const res = await fetch(`https://api.imgbb.com/1/upload?key=${apiKey}`, {
                 method: 'POST',
                 body: formData
             });
 
-            if (res.ok) {
-                const imageUrl = await res.text();
-                if (imageUrl.startsWith('https://')) {
-                    urlOutput.innerText = imageUrl;
-                    resultBox.style.display = 'block';
-                    statusMsg.style.color = "green";
-                    statusMsg.innerText = "🎉 上傳成功！網址已複製到剪貼簿。";
-                    
-                    // 自動複製網址
-                    navigator.clipboard.writeText(imageUrl).catch(() => {
-                        const el = document.createElement('textarea');
-                        el.value = imageUrl;
-                        document.body.appendChild(el);
-                        el.select();
-                        document.execCommand('copy');
-                        document.body.removeChild(el);
-                    });
-                } else {
-                    throw new Error();
-                }
-            } else { 
-                throw new Error(); 
+            const data = await res.json();
+
+            if (data.success) {
+                const imageUrl = data.data.url;
+                urlOutput.innerText = imageUrl;
+                resultBox.style.display = 'block';
+                statusMsg.style.color = "green";
+                statusMsg.innerText = "🎉 上傳成功！網址已複製到剪貼簿。";
+                
+                // 自動複製網址
+                navigator.clipboard.writeText(imageUrl).catch(() => {
+                    const el = document.createElement('textarea');
+                    el.value = imageUrl;
+                    document.body.appendChild(el);
+                    el.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(el);
+                });
+            } else {
+                throw new Error(data.error ? data.error.message : '上傳失敗');
             }
         } catch (err) {
+            console.error(err);
             statusMsg.style.color = "red";
             statusMsg.innerText = "❌ 上傳失敗，請重試！";
             uploadBtn.disabled = false;
