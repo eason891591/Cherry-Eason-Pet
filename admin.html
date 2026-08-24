@@ -47,7 +47,13 @@
         selectedFile = e.target.files[0];
         if (selectedFile) {
             const reader = new FileReader();
-            reader.onload = e => { previewImg.src = e.target.result; previewImg.style.display = 'block'; uploadBtn.disabled = false; statusMsg.innerText = ""; resultBox.style.display = 'none'; };
+            reader.onload = e => { 
+                previewImg.src = e.target.result; 
+                previewImg.style.display = 'block'; 
+                uploadBtn.disabled = false; 
+                statusMsg.innerText = ""; 
+                resultBox.style.display = 'none'; 
+            };
             reader.readAsDataURL(selectedFile);
         }
     });
@@ -57,24 +63,41 @@
         uploadBtn.disabled = true;
         statusMsg.style.color = "#5C3A00";
         statusMsg.innerText = "正在上傳照片...";
+
         const formData = new FormData();
-        formData.append('image', selectedFile);
+        formData.append('reqtype', 'fileupload');
+        formData.append('fileToUpload', selectedFile);
 
         try {
-            const res = await fetch('https://api.imgur.com/3/image', {
+            // 使用完全免 API Key 且支援跨網域的免費圖床
+            const res = await fetch('https://catbox.moe/user/api.php', {
                 method: 'POST',
-                headers: { Authorization: 'Client-ID 546c25a59c58ad7' },
                 body: formData
             });
-            const resData = await res.json();
-            if (resData.success) {
-                const imageUrl = resData.data.link;
-                urlOutput.innerText = imageUrl;
-                resultBox.style.display = 'block';
-                statusMsg.style.color = "green";
-                statusMsg.innerText = "🎉 上傳成功！網址已複製到剪貼簿。";
-                navigator.clipboard.writeText(imageUrl);
-            } else { throw new Error(); }
+
+            if (res.ok) {
+                const imageUrl = await res.text();
+                if (imageUrl.startsWith('https://')) {
+                    urlOutput.innerText = imageUrl;
+                    resultBox.style.display = 'block';
+                    statusMsg.style.color = "green";
+                    statusMsg.innerText = "🎉 上傳成功！網址已複製到剪貼簿。";
+                    
+                    // 自動複製網址
+                    navigator.clipboard.writeText(imageUrl).catch(() => {
+                        const el = document.createElement('textarea');
+                        el.value = imageUrl;
+                        document.body.appendChild(el);
+                        el.select();
+                        document.execCommand('copy');
+                        document.body.removeChild(el);
+                    });
+                } else {
+                    throw new Error();
+                }
+            } else { 
+                throw new Error(); 
+            }
         } catch (err) {
             statusMsg.style.color = "red";
             statusMsg.innerText = "❌ 上傳失敗，請重試！";
