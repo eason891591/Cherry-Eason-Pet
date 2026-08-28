@@ -27,37 +27,37 @@
   
   <div class="row-2">
     <div class="form-group">
-      <label>序號 (選填)：</label>
+      <label>序號 id (選填)：</label>
       <input type="text" id="p-id" placeholder="例如：P001">
     </div>
     <div class="form-group">
-      <label>分類 (選填)：</label>
+      <label>分類 category (選填)：</label>
       <input type="text" id="p-category" placeholder="例如：貓咪零食">
     </div>
   </div>
 
   <div class="form-group">
-    <label>商品名稱：</label>
+    <label>商品名稱 name：</label>
     <input type="text" id="p-name" placeholder="例如：天然凍乾雞肉丁">
   </div>
 
   <div class="form-group">
-    <label>價格 (NT$)：</label>
+    <label>價格 price (NT$)：</label>
     <input type="number" id="p-price" placeholder="例如：180">
   </div>
 
   <div class="form-group">
-    <label>其他口味 / 選項 (選填)：</label>
+    <label>其他口味/選項 flavors (選填)：</label>
     <input type="text" id="p-flavors" placeholder="例如：原味, 牛肉味, 鮭魚味">
   </div>
 
   <div class="form-group">
-    <label>商品描述 (供放大彈窗使用)：</label>
+    <label>商品描述 description (放大彈窗用)：</label>
     <textarea id="p-desc" rows="3" placeholder="詳細說明商品成分、容量、適合寵物等..."></textarea>
   </div>
 
   <div class="form-group">
-    <label>商品照片：</label>
+    <label>商品照片 image：</label>
     <div class="drop-zone" onclick="document.getElementById('file-input').click()">
       <span style="font-size:2rem;">📷</span>
       <p style="margin:5px 0 0 0; font-size:0.9rem; font-weight:bold;">點擊選擇照片</p>
@@ -71,8 +71,8 @@
 </div>
 
 <script>
-  // ⚠️ 請確認為你的 Google Apps Script 部署 Web App 網址 ⚠️
-  const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwQKEQxAGMGvSQEDCLrhhBqN5H64vEv1nL-yNAgbpNaJcrJ-YO2zG7iSSwLDP0dp_12/exec"; 
+  // ⚠️ 請在此處貼上【第三步】產生的全新 GAS Web App 部署網址 ⚠️
+  const GAS_WEB_APP_URL = https://script.google.com/macros/s/AKfycbyQ63T0n4iehdiMhhNKrYf5XLA_ohErEnZYURSS_wiQT6o5DRlQwEBxNeB5DlSGegNj/exec"; 
 
   let compressedBase64 = "";
   let fileName = "";
@@ -143,7 +143,7 @@
 
     btn.disabled = true;
     msg.style.color = '#5C3A00';
-    msg.innerText = '正在寫入 Google 表單...';
+    msg.innerText = '正在上傳照片並寫入試算表...';
 
     const payload = {
       action: 'addProduct',
@@ -159,7 +159,12 @@
     };
 
     try {
-      const res = await fetch(GAS_WEB_APP_URL, {
+      // 在網址後方直接加上 ?action=addProduct，確保雙重防呆
+      const sendUrl = GAS_WEB_APP_URL.includes('?') 
+        ? GAS_WEB_APP_URL + '&action=addProduct' 
+        : GAS_WEB_APP_URL + '?action=addProduct';
+
+      const res = await fetch(sendUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'text/plain;charset=utf-8'
@@ -173,14 +178,14 @@
       try {
         data = JSON.parse(responseText);
       } catch (e) {
-        throw new Error('伺服器未回傳 JSON 格式（收到：' + responseText + '），請檢查 GAS 是否已「部署為新版本」。');
+        throw new Error('伺服器未回傳 JSON 格式（收到：' + responseText + '）');
       }
 
       if (data.status === 'success') {
         msg.style.color = 'green';
         msg.innerText = '🎉 成功！商品資料與照片已自動寫入 Google 試算表！';
         
-        // 清空欄位
+        // 清空輸入欄位
         document.getElementById('p-id').value = '';
         document.getElementById('p-category').value = '';
         document.getElementById('p-name').value = '';
