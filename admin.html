@@ -11,6 +11,8 @@
     .form-group { margin-bottom: 15px; text-align: left; }
     label { font-weight: bold; font-size: 0.9rem; display: block; margin-bottom: 5px; }
     input[type="text"], input[type="number"], textarea { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 1rem; }
+    .row-2 { display: flex; gap: 10px; }
+    .row-2 .form-group { flex: 1; }
     .drop-zone { border: 2px dashed #FFD27F; padding: 20px; border-radius: 12px; background: #fffcf7; text-align: center; cursor: pointer; margin-top: 5px; }
     #preview { max-width: 100%; max-height: 180px; margin-top: 10px; display: none; border-radius: 8px; margin-left: auto; margin-right: auto; }
     button { width: 100%; padding: 14px; background: #FFD27F; border: none; border-radius: 25px; font-size: 1.05rem; font-weight: bold; color: #5C3A00; cursor: pointer; margin-top: 15px; }
@@ -23,19 +25,35 @@
 <div class="card">
   <h2>🐾 新增商品至表單</h2>
   
+  <div class="row-2">
+    <div class="form-group">
+      <label>序號 (選填)：</label>
+      <input type="text" id="p-id" placeholder="例如：P001">
+    </div>
+    <div class="form-group">
+      <label>分類 (選填)：</label>
+      <input type="text" id="p-category" placeholder="例如：貓咪零食">
+    </div>
+  </div>
+
   <div class="form-group">
     <label>商品名稱：</label>
-    <input type="text" id="p-name" placeholder="例如：天然肉乾零食">
+    <input type="text" id="p-name" placeholder="例如：天然凍乾雞肉丁">
   </div>
 
   <div class="form-group">
     <label>價格 (NT$)：</label>
-    <input type="number" id="p-price" placeholder="例如：150">
+    <input type="number" id="p-price" placeholder="例如：180">
   </div>
 
   <div class="form-group">
-    <label>商品描述 (選填)：</label>
-    <textarea id="p-desc" rows="2" placeholder="簡短說明商品特色..."></textarea>
+    <label>其他口味 / 選項 (選填)：</label>
+    <input type="text" id="p-flavors" placeholder="例如：原味, 牛肉味, 鮭魚味">
+  </div>
+
+  <div class="form-group">
+    <label>商品描述 (供放大彈窗使用)：</label>
+    <textarea id="p-desc" rows="3" placeholder="詳細說明商品成分、容量、適合寵物等..."></textarea>
   </div>
 
   <div class="form-group">
@@ -53,8 +71,8 @@
 </div>
 
 <script>
-  // ⚠️ 請填入你的 Google Apps Script 部署 Web App 網址 ⚠️
-  const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbypCVlzPIPUqpZCcAG4H2Ivf5t_0nycAsm7YPI4ZsE23hRvhsDaswxDxWX5sDBunx1Y/exec"; 
+  // ⚠️ 請確認為你的 Google Apps Script 部署 Web App 網址 ⚠️
+  const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwQKEQxAGMGvSQEDCLrhhBqN5H64vEv1nL-yNAgbpNaJcrJ-YO2zG7iSSwLDP0dp_12/exec"; 
 
   let compressedBase64 = "";
   let fileName = "";
@@ -68,7 +86,7 @@
 
     const msg = document.getElementById('status-msg');
     msg.style.color = '#5C3A00';
-    msg.innerText = '正在最佳化照片尺寸...';
+    msg.innerText = '正在處理照片尺寸...';
 
     const reader = new FileReader();
     reader.onload = function(e) {
@@ -109,8 +127,11 @@
   }
 
   async function uploadAndSave() {
+    const id = document.getElementById('p-id').value.trim();
+    const category = document.getElementById('p-category').value.trim();
     const name = document.getElementById('p-name').value.trim();
     const price = document.getElementById('p-price').value.trim();
+    const flavors = document.getElementById('p-flavors').value.trim();
     const desc = document.getElementById('p-desc').value.trim();
     const btn = document.getElementById('sub-btn');
     const msg = document.getElementById('status-msg');
@@ -122,12 +143,15 @@
 
     btn.disabled = true;
     msg.style.color = '#5C3A00';
-    msg.innerText = '正在自動處理並寫入 Google 表單...';
+    msg.innerText = '正在寫入 Google 表單...';
 
     const payload = {
       action: 'addProduct',
+      id: id,
+      category: category,
       name: name,
       price: price,
+      flavors: flavors,
       description: desc,
       imageBase64: compressedBase64,
       imageName: fileName,
@@ -143,10 +167,14 @@
 
       if (data.status === 'success') {
         msg.style.color = 'green';
-        msg.innerText = '🎉 成功！商品資料與圖片已自動寫入 Google 試算表！';
+        msg.innerText = '🎉 成功！商品資料與照片已自動寫入 Google 試算表！';
+        
         // 清空欄位
+        document.getElementById('p-id').value = '';
+        document.getElementById('p-category').value = '';
         document.getElementById('p-name').value = '';
         document.getElementById('p-price').value = '';
+        document.getElementById('p-flavors').value = '';
         document.getElementById('p-desc').value = '';
         document.getElementById('preview').style.display = 'none';
         compressedBase64 = '';
@@ -156,7 +184,7 @@
     } catch (err) {
       console.error(err);
       msg.style.color = 'red';
-      msg.innerText = '❌ 處理失敗：' + err.message;
+      msg.innerText = '❌ 寫入失敗：' + err.message;
       btn.disabled = false;
     }
   }
