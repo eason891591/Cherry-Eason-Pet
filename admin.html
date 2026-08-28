@@ -13,8 +13,7 @@
     input[type="text"], input[type="number"], textarea { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 1rem; }
     .row-2 { display: flex; gap: 10px; }
     .row-2 .form-group { flex: 1; }
-    .drop-zone { border: 2px dashed #FFD27F; padding: 20px; border-radius: 12px; background: #fffcf7; text-align: center; cursor: pointer; margin-top: 5px; transition: background 0.2s; }
-    .drop-zone.hover { background: #ffe8bc; }
+    .drop-zone { border: 2px dashed #FFD27F; padding: 20px; border-radius: 12px; background: #fffcf7; text-align: center; cursor: pointer; margin-top: 5px; }
     #preview { max-width: 100%; max-height: 180px; margin-top: 10px; display: none; border-radius: 8px; margin-left: auto; margin-right: auto; }
     button { width: 100%; padding: 14px; background: #FFD27F; border: none; border-radius: 25px; font-size: 1.05rem; font-weight: bold; color: #5C3A00; cursor: pointer; margin-top: 15px; }
     button:disabled { background: #e0e0e0; color: #aaa; cursor: not-allowed; }
@@ -39,30 +38,30 @@
 
   <div class="form-group">
     <label>商品名稱 name (必填)：</label>
-    <input type="text" id="p-name" placeholder="例如：天然凍乾雞肉丁" oninput="checkFormValid()">
+    <input type="text" id="p-name" placeholder="例如：天然肉乾零食">
   </div>
 
   <div class="form-group">
     <label>價格 price (NT$) (必填)：</label>
-    <input type="number" id="p-price" placeholder="例如：180" oninput="checkFormValid()">
+    <input type="number" id="p-price" placeholder="例如：150">
   </div>
 
   <div class="form-group">
     <label>其他口味/選項 flavors (選填)：</label>
-    <input type="text" id="p-flavors" placeholder="例如：原味, 牛肉味, 鮭魚味">
+    <input type="text" id="p-flavors" placeholder="例如：原味, 牛肉味">
   </div>
 
   <div class="form-group">
     <label>商品描述 description (選填)：</label>
-    <textarea id="p-desc" rows="3" placeholder="詳細說明商品成分、容量、適合寵物等..."></textarea>
+    <textarea id="p-desc" rows="2" placeholder="簡短說明商品特色..."></textarea>
   </div>
 
   <div class="form-group">
-    <label>商品照片 image (選填/可拖曳)：</label>
-    <div class="drop-zone" id="drop-zone" onclick="document.getElementById('file-input').click()">
+    <label>商品照片 image：</label>
+    <div class="drop-zone" onclick="document.getElementById('file-input').click()">
       <span style="font-size:2rem;">📷</span>
-      <p id="drop-text" style="margin:5px 0 0 0; font-size:0.9rem; font-weight:bold;">點擊或拖曳照片至此</p>
-      <input type="file" id="file-input" accept="image/*" style="display:none;" onchange="handleFileSelect(this)">
+      <p style="margin:5px 0 0 0; font-size:0.9rem; font-weight:bold;">點擊選擇照片</p>
+      <input type="file" id="file-input" accept="image/*" style="display:none;" onchange="handleFile(this)">
       <img id="preview" alt="預覽圖">
     </div>
   </div>
@@ -72,113 +71,60 @@
 </div>
 
 <script>
-  // ⚠️ 請填入你的 GAS Web App 部署網址 ⚠️
-  const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyQ63T0n4iehdiMhhNKrYf5XLA_ohErEnZYURSS_wiQT6o5DRlQwEBxNeB5DlSGegNj/exec"; 
+  // ⚠️ 你的 Google Apps Script 部署 Web App 網址 ⚠️
+  const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwQKEQxAGMGvSQEDCLrhhBqN5H64vEv1nL-yNAgbpNaJcrJ-YO2zG7iSSwLDP0dp_12/exec"; 
 
   let compressedBase64 = "";
   let fileName = "";
   let fileType = "";
 
-  // 監聽拖曳事件
-  const dropZone = document.getElementById('drop-zone');
-  ['dragenter', 'dragover'].forEach(eventName => {
-    dropZone.addEventListener(eventName, (e) => { e.preventDefault(); dropZone.classList.add('hover'); }, false);
-  });
-  ['dragleave', 'drop'].forEach(eventName => {
-    dropZone.addEventListener(eventName, (e) => { e.preventDefault(); dropZone.classList.remove('hover'); }, false);
-  });
-  dropZone.addEventListener('drop', (e) => {
-    const dt = e.dataTransfer;
-    const files = dt.files;
-    if (files && files.length > 0) {
-      processFile(files[0]);
-    }
-  });
-
-  function handleFileSelect(input) {
-    if (input.files && input.files[0]) {
-      processFile(input.files[0]);
-    }
-  }
-
-  function checkFormValid() {
-    const name = document.getElementById('p-name').value.trim();
-    const price = document.getElementById('p-price').value.trim();
-    document.getElementById('sub-btn').disabled = !(name && price);
-  }
-
-  function processFile(file) {
+  // 保留完全相同的 handleFile 圖片處理邏輯
+  function handleFile(input) {
+    const file = input.files[0];
+    if (!file) return;
     fileName = file.name;
     fileType = file.type || "image/jpeg";
 
     const msg = document.getElementById('status-msg');
     msg.style.color = '#5C3A00';
-    msg.innerText = '正在處理照片...';
+    msg.innerText = '正在最佳化照片尺寸...';
 
     const reader = new FileReader();
-    
-    reader.onerror = function() {
-      msg.style.color = 'red';
-      msg.innerText = '❌ 讀取照片失敗，請更換圖片或格式。';
-    };
-
     reader.onload = function(e) {
-      const rawDataUrl = e.target.result;
       const img = new Image();
-
-      // 如果 Canvas 壓縮失敗，自動退回直接使用原圖 Base64
-      img.onerror = function() {
-        console.warn("Canvas 壓縮失敗，切換為原圖發送模式");
-        compressedBase64 = rawDataUrl.split(',')[1];
-        showPreview(rawDataUrl);
-      };
-
       img.onload = function() {
-        try {
-          const maxDim = 1000;
-          let width = img.width;
-          let height = img.height;
+        const maxDim = 1000;
+        let width = img.width;
+        let height = img.height;
 
-          if (width > maxDim || height > maxDim) {
-            if (width > height) {
-              height = Math.round((height * maxDim) / width);
-              width = maxDim;
-            } else {
-              width = Math.round((width * maxDim) / height);
-              height = maxDim;
-            }
+        if (width > maxDim || height > maxDim) {
+          if (width > height) {
+            height = Math.round((height * maxDim) / width);
+            width = maxDim;
+          } else {
+            width = Math.round((width * maxDim) / height);
+            height = maxDim;
           }
-
-          const canvas = document.createElement('canvas');
-          canvas.width = width;
-          canvas.height = height;
-          const ctx = canvas.getContext('2d');
-          ctx.drawImage(img, 0, 0, width, height);
-
-          const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
-          compressedBase64 = dataUrl.split(',')[1];
-          showPreview(dataUrl);
-        } catch (err) {
-          console.warn("Canvas 畫布處理解析異常，使用原圖發送", err);
-          compressedBase64 = rawDataUrl.split(',')[1];
-          showPreview(rawDataUrl);
         }
+
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+        compressedBase64 = dataUrl.split(',')[1];
+
+        const preview = document.getElementById('preview');
+        preview.src = dataUrl;
+        preview.style.display = 'block';
+        document.getElementById('sub-btn').disabled = false;
+        msg.innerText = '✅ 照片已準備就緒！';
       };
-
-      img.src = rawDataUrl;
+      img.src = e.target.result;
     };
-
     reader.readAsDataURL(file);
-  }
-
-  function showPreview(src) {
-    const preview = document.getElementById('preview');
-    preview.src = src;
-    preview.style.display = 'block';
-    document.getElementById('drop-text').innerText = '已選擇照片 (點擊可更換)';
-    document.getElementById('status-msg').style.color = 'green';
-    document.getElementById('status-msg').innerText = '✅ 照片已準備就緒！';
-    checkFormValid();
   }
 
   async function uploadAndSave() {
@@ -198,8 +144,9 @@
 
     btn.disabled = true;
     msg.style.color = '#5C3A00';
-    msg.innerText = '正在上傳商品資料與照片...';
+    msg.innerText = '正在自動處理並寫入 Google 表單...';
 
+    // 完整的 7 個欄位 Payload
     const payload = {
       action: 'addProduct',
       id: id,
@@ -220,44 +167,38 @@
 
       const res = await fetch(sendUrl, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'text/plain;charset=utf-8'
-        },
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
         body: JSON.stringify(payload)
       });
       
       const responseText = await res.text();
       let data;
-      
       try {
         data = JSON.parse(responseText);
       } catch (e) {
-        throw new Error('伺服器未回傳 JSON（收到：' + responseText + '）');
+        throw new Error('收到非 JSON 回傳：' + responseText);
       }
 
       if (data.status === 'success') {
         msg.style.color = 'green';
-        msg.innerText = '🎉 成功！商品資料與照片已寫入 Google 試算表！';
+        msg.innerText = '🎉 成功！商品資料與圖片已自動寫入 Google 試算表！';
         
-        // 清空輸入欄位與照片
+        // 清空輸入欄位
         document.getElementById('p-id').value = '';
         document.getElementById('p-category').value = '';
         document.getElementById('p-name').value = '';
         document.getElementById('p-price').value = '';
         document.getElementById('p-flavors').value = '';
         document.getElementById('p-desc').value = '';
-        document.getElementById('file-input').value = '';
         document.getElementById('preview').style.display = 'none';
-        document.getElementById('drop-text').innerText = '點擊或拖曳照片至此';
         compressedBase64 = '';
-        checkFormValid();
       } else {
         throw new Error(data.message || '儲存失敗');
       }
     } catch (err) {
       console.error(err);
       msg.style.color = 'red';
-      msg.innerText = '❌ 寫入失敗：' + err.message;
+      msg.innerText = '❌ 處理失敗：' + err.message;
       btn.disabled = false;
     }
   }
