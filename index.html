@@ -227,58 +227,62 @@
 
 <a href="#top" id="back-to-top" title="回到最上層">⬆️</a>
 
-<!-- 🔐 Firebase SDK 初始化與掛載 -->
+<!-- 🔐 Firebase SDK 初始化與驗證邏輯 -->
 <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-  import { 
-    getAuth, 
-    GoogleAuthProvider, 
-    signInWithPopup, 
-    signOut, 
-    onAuthStateChanged 
-  } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-  import { 
-    getFirestore, 
-    collection, 
-    addDoc, 
-    query, 
-    where, 
-    getDocs, 
-    serverTimestamp 
-  } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-
-  // ⚠️ 請務必將以下替換為您 Firebase Console 的真實設定值
-  const firebaseConfig = {
-    apiKey: "YOUR_API_KEY",
-    authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-    projectId: "YOUR_PROJECT_ID",
-    storageBucket: "YOUR_PROJECT_ID.appspot.com",
-    messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-    appId: "YOUR_APP_ID"
-  };
-
-  // 1. 初始化 Firebase
-  const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
-  const db = getFirestore(app);
-
-  // 2. 掛載到全域 window 供 script.js / cart.js 使用
-  window.firebaseAuth = auth;
-  window.db = db;
-  window.firestoreTools = {
-    collection,
-    addDoc,
-    query,
-    where,
-    getDocs,
-    serverTimestamp
-  };
-  window.firebaseTools = {
-    GoogleAuthProvider,
-    signInWithPopup,
-    signOut,
-    onAuthStateChanged
-  };
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    import { getFirestore, collection, addDoc, serverTimestamp, query, where, getDocs, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+  
+    const firebaseConfig = {
+      apiKey: "AIzaSyDf663zw1zdWVCuPkN9hqtIQTE6dI4zaog",
+      authDomain: "cherryeason-pet.firebaseapp.com",
+      projectId: "cherryeason-pet",
+      storageBucket: "cherryeason-pet.firebasestorage.app",
+      messagingSenderId: "1025273907073",
+      appId: "1:1025273907073:web:b4c2c3451fc5de9ffe0a80",
+      measurementId: "G-RC10R4MGXM"
+    };
+  
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const provider = new GoogleAuthProvider();
+    
+    window.firebaseAuth = auth;
+    window.db = db;
+    window.firestoreTools = { collection, addDoc, serverTimestamp, query, where, getDocs, orderBy };
+    window.firebaseTools = { GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged };
+  
+    window.handleAuth = async () => {
+      if (!auth.currentUser) {
+        try { 
+          await signInWithPopup(auth, provider); 
+        } catch (e) { 
+          alert("登入失敗，請檢查網路狀態或重試"); 
+        }
+      } else {
+        if(confirm("確定要登出嗎？")) await signOut(auth);
+      }
+    };
+  
+    onAuthStateChanged(auth, (user) => {
+      const infoEl = document.getElementById('user-info');
+      const btnEl = document.getElementById('auth-btn');
+      const avatarEl = document.getElementById('user-avatar');
+      
+      if (user) {
+        if (infoEl) infoEl.innerText = `${user.displayName}`;
+        if (btnEl) btnEl.innerText = "登出";
+        if (avatarEl && user.photoURL) { 
+            avatarEl.src = user.photoURL; 
+            avatarEl.style.display = "inline-block"; 
+        }
+      } else {
+        if (infoEl) infoEl.innerText = "訪客";
+        if (btnEl) btnEl.innerText = "登入";
+        if (avatarEl) avatarEl.style.display = "none";
+      }
+    });
 </script>
 
 <!-- 載入外部 JS 檔案 -->
