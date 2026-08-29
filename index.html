@@ -7,7 +7,7 @@
     <title>Cherry&Eason Pet | 寵物用品店</title>
     <link rel="stylesheet" href="style.css">
     <link rel="icon" href="favicon.png" type="image/png">
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&display=swap" rel="stylesheet">
 </head>
 <body id="top"> 
 
@@ -23,35 +23,36 @@
     </div>
 
     <nav class="nav" id="mobile-nav">
-    <div class="nav-close" onclick="toggleMenu()">&times;</div>
-    
-    <a href="#top" onclick="backToShop(); handleNavClick()">首頁</a> 
+        <div class="nav-close" onclick="toggleMenu()">&times;</div>
+        
+        <a href="#top" onclick="backToShop(); handleNavClick()">首頁</a> 
 
-    <div class="dropdown">
-        <a href="javascript:void(0)" class="dropbtn">商品分類 ▾</a>
-        <div class="dropdown-content">
-            <a href="javascript:void(0)" onclick="backToShop(); filterProducts('hot'); handleNavClick()">🔥 熱門商品</a>
-            <a href="javascript:void(0)" onclick="backToShop(); filterProducts('all'); handleNavClick()">🌟 所有商品</a>
-            <hr style="border: 0; border-top: 1px solid #eee; margin: 5px 0;">
-            <a href="javascript:void(0)" onclick="backToShop(); filterProducts('cat'); handleNavClick()">🐱 貓貓專區</a>
-            <a href="javascript:void(0)" onclick="backToShop(); filterProducts('dog'); handleNavClick()">🐶 狗狗專區</a>
+        <div class="dropdown">
+            <a href="javascript:void(0)" class="dropbtn">商品分類 ▾</a>
+            <div class="dropdown-content">
+                <a href="javascript:void(0)" onclick="backToShop(); filterProducts('hot'); handleNavClick()">🔥 熱門商品</a>
+                <a href="javascript:void(0)" onclick="backToShop(); filterProducts('all'); handleNavClick()">🌟 所有商品</a>
+                <hr style="border: 0; border-top: 1px solid #eee; margin: 5px 0;">
+                <a href="javascript:void(0)" onclick="backToShop(); filterProducts('cat'); handleNavClick()">🐱 貓貓專區</a>
+                <a href="javascript:void(0)" onclick="backToShop(); filterProducts('dog'); handleNavClick()">🐶 狗狗專區</a>
+            </div>
         </div>
-    </div>
 
-    <a href="#about-section" onclick="backToShop(); handleNavClick()">品牌故事</a>
-    <a href="#footer-section" onclick="backToShop(); handleNavClick()">聯絡我們</a>
+        <a href="#about-section" onclick="backToShop(); handleNavClick()">品牌故事</a>
+        <a href="#footer-section" onclick="backToShop(); handleNavClick()">聯絡我們</a>
 
-    <div id="auth-section">
-        <img id="user-avatar" src="" style="display: none; width: 28px; height: 28px; border-radius: 50%; border: 1px solid #FFD27F; vertical-align: middle; margin-right: 5px;">
-        <span id="user-info" onclick="showMemberCenter(); handleNavClick()" style="font-size: 14px; color: #5C3A00; font-weight: bold; cursor: pointer; text-decoration: underline;">訪客</span>
-        <button id="auth-btn" onclick="handleAuth()">登入</button>
-    </div>
-</nav>
+        <div id="auth-section">
+            <img id="user-avatar" src="" style="display: none; width: 28px; height: 28px; border-radius: 50%; border: 1px solid #FFD27F; vertical-align: middle; margin-right: 5px;">
+            <span id="user-info" onclick="showMemberCenter(); handleNavClick()" style="font-size: 14px; color: #5C3A00; font-weight: bold; cursor: pointer; text-decoration: underline;">訪客</span>
+            <button id="auth-btn" onclick="handleAuth()">登入</button>
+        </div>
+    </nav>
 
     <div class="search-bar">
         <input type="text" id="product-search" placeholder="搜尋商品名稱...">
     </div>
 </header>
+
 <section class="hero">
     <div class="container">
         <h1>歡迎來到 Cherry&Eason Pet</h1>
@@ -107,6 +108,34 @@
         </div>
     </div>
 </section>
+
+<!-- 🔍 商品詳情放大彈窗 Modal -->
+<div id="product-detail-modal" class="p-modal-overlay" onclick="closeProductModalOnOverlay(event)">
+    <div class="p-modal-content">
+        <span class="p-modal-close" onclick="closeProductModal()">&times;</span>
+        <div class="p-modal-body">
+            <div class="p-modal-img-box">
+                <img id="p-modal-img" src="" alt="商品圖片">
+            </div>
+            <div class="p-modal-info-box">
+                <h2 id="p-modal-title">商品名稱</h2>
+                <div class="p-modal-price" id="p-modal-price">NT$ 0</div>
+                
+                <div id="p-modal-variants-group">
+                    <label for="p-modal-variant-select" style="font-weight:bold; font-size:0.85rem; color:#555; display:block; margin-bottom:5px;">選擇規格 / 口味：</label>
+                    <select id="p-modal-variant-select" style="width:100%; padding:8px; border-radius:8px; border:1px solid #ccc; font-size:0.95rem; background:white;"></select>
+                </div>
+
+                <div>
+                    <h4 style="margin:10px 0 5px 0; color:#5C3A00; font-size:0.95rem;">📖 商品描述</h4>
+                    <p id="p-modal-desc" style="color:#666; font-size:0.9rem; line-height:1.6; white-space:pre-line; margin:0;">商品詳細內容...</p>
+                </div>
+
+                <button id="p-modal-add-btn" class="p-modal-cart-btn">🛒 加入購物車</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <div id="checkout-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 10000; justify-content: center; align-items: center; backdrop-filter: blur(5px);">
     <div style="background: white; padding: 25px; border-radius: 20px; width: 90%; max-width: 450px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); position: relative; max-height: 85vh; overflow-y: auto; display: flex; flex-direction: column;">
@@ -198,59 +227,8 @@
 
 <a href="#top" id="back-to-top" title="回到最上層">⬆️</a>
 
-<script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-    import { getFirestore, collection, addDoc, serverTimestamp, query, where, getDocs, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-  
-    const firebaseConfig = {
-      apiKey: "AIzaSyDf663zw1zdWVCuPkN9hqtIQTE6dI4zaog",
-      authDomain: "cherryeason-pet.firebaseapp.com",
-      projectId: "cherryeason-pet",
-      storageBucket: "cherryeason-pet.firebasestorage.app",
-      messagingSenderId: "1025273907073",
-      appId: "1:1025273907073:web:b4c2c3451fc5de9ffe0a80",
-      measurementId: "G-RC10R4MGXM"
-    };
-  
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
-    const provider = new GoogleAuthProvider();
-    
-    window.firebaseAuth = auth;
-    window.db = db;
-    window.firestoreTools = { collection, addDoc, serverTimestamp, query, where, getDocs, orderBy };
-  
-    window.handleAuth = async () => {
-      if (!auth.currentUser) {
-        try { await signInWithPopup(auth, provider); } 
-        catch (e) { alert("登入失敗，請檢查網路狀態"); }
-      } else {
-        if(confirm("確定要登出嗎？")) await signOut(auth);
-      }
-    };
-  
-    onAuthStateChanged(auth, (user) => {
-      const infoEl = document.getElementById('user-info');
-      const btnEl = document.getElementById('auth-btn');
-      const avatarEl = document.getElementById('user-avatar');
-      
-      if (user) {
-        infoEl.innerText = `${user.displayName}`;
-        btnEl.innerText = "登出";
-        if (avatarEl && user.photoURL) { 
-            avatarEl.src = user.photoURL; 
-            avatarEl.style.display = "inline-block"; 
-        }
-      } else {
-        infoEl.innerText = "訪客";
-        btnEl.innerText = "登入";
-        if (avatarEl) avatarEl.style.display = "none";
-      }
-    });
-</script>
-
+<!-- 載入外部 JS 檔案 -->
+<script src="script.js"></script>
 <script src="cart.js"></script>
 </body>
 </html>
