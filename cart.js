@@ -579,3 +579,97 @@ async function fetchUserOrders(uid) {
         emptyMsg.innerText = "❌ 暫時無法讀取訂單，請稍後再試。";
     }
 }
+
+/* ==========================================
+   🔐 Firebase 會員登入 / 登出與 UI 監聽
+   ========================================== */
+
+// 1. 觸發 Google 登入 / 登出
+window.handleAuth = async function() {
+    const auth = window.firebaseAuth || (typeof getAuth === 'function' ? getAuth() : null);
+    
+    if (!auth) {
+        alert("❌ Firebase Auth 未成功初始化，請確認網頁中的 Firebase 設定！");
+        return;
+    }
+
+    if (auth.currentUser) {
+        // 已登入狀態點擊：詢問前往會員中心或登出
+        if (confirm(`目前登入帳號：${auth.currentUser.displayName || auth.currentUser.email}\n要前往「會員中心」嗎？\n(按「取消」則執行登出)`)) {
+            showMemberCenter();
+        } else {
+            try {
+                if (window.firebaseTools && window.firebaseTools.signOut) {
+                    await window.firebaseTools.signOut(auth);
+                } else if (auth.signOut) {
+                    await auth.signOut();
+                }
+                showToast("👋 已成功登出");
+                backToShop();
+            } catch (err) {
+                console.error("登出失敗:", err);
+                alert("登出發生錯誤：" + err.message);
+            }
+        }
+    } else {
+        // 未登入狀態點擊：執行 Google 彈窗登入
+        try {
+            let provider;
+            if (window.firebaseTools && window.firebaseTools.GoogleAuthProvider) {
+                provider = new window.firebaseTools.GoogleAuthProvider();
+                await window.firebaseTools.signInWithPopup(auth, provider);
+            } else if (window.firebase && window.firebase.auth) {
+                provider = new window.firebase.auth.GoogleAuthProvider();
+                await auth.signInWithPopup(provider);
+            } else if (typeof signInWithPopup === 'function') {
+                const { GoogleAuthProvider } = window.firebaseTools || {};
+                provider = new GoogleAuthProvider();
+                await signInWithPopup(auth, provider);
+            }
+            showToast("🎉 登入成功！");
+        } catch (err) {
+            console.error("登入失敗:", err);
+            if (err.code !== 'auth/popup-closed-by-user') {
+                alert("❌ 登入失敗: " + err.message);
+            }
+        }
+    }
+};
+
+// 2. 自動更新 Header 登入按鈕狀態
+function updateAuthButtonUI(user) {
+    const authBtn = document.getElementById("auth-btn");
+    if (!authBtn) return;
+
+    if (user) {
+        const name = user.displayName ? user.displayName.split(" ")[0] : "會員";
+        authBtn.innerText = `👤 ${name}`;
+        authBtn.style.background = "#5C3A00";
+    } else {
+        authBtn.innerText = "🔑 會員登入";
+        authBtn.style.background = "#5C3A00";
+    }
+}
+
+// 3. 自動綁定事件與監聽 Firebase 登入狀態變更
+document.addEventListener("DOMContentLoaded", () => {
+    // 綁定 Header 上的登入按鈕點擊事件
+    const authBtn = document.getElementById("auth-btn");
+    if (authBtn) {
+        authBtn.onclick = () => window.handleAuth();
+    }
+
+    // 輪詢等待 Firebase 初始化完成後掛載 State 監聽
+    const checkAuthTimer = setInterval(() => {
+        if (window.firebaseAuth) {
+            clearInterval(checkAuthTimer);
+            
+            const onAuth = window.firebaseTools?.onAuthStateChanged || window.firebaseAuth?.onAuthStateChanged;
+            if (onAuth) {
+                onAuth.call(window.firebaseTools ? window.firebaseTools : window.firebaseAuth, window.firebaseAuth, (user) => {
+                    updateAuthButtonUI(user);
+                });
+            }
+        }
+    }, 200);
+});
