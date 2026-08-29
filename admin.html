@@ -10,7 +10,7 @@
     h2 { text-align: center; margin-top: 0; color: #5C3A00; }
     .form-group { margin-bottom: 15px; text-align: left; }
     label { font-weight: bold; font-size: 0.9rem; display: block; margin-bottom: 5px; }
-    input[type="text"], input[type="number"], textarea { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 1rem; }
+    input[type="text"], input[type="number"], select, textarea { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 1rem; background-color: #fff; }
     .drop-zone { border: 2px dashed #FFD27F; padding: 20px; border-radius: 12px; background: #fffcf7; text-align: center; cursor: pointer; margin-top: 5px; }
     #preview { max-width: 100%; max-height: 180px; margin-top: 10px; display: none; border-radius: 8px; margin-left: auto; margin-right: auto; }
     button { width: 100%; padding: 14px; background: #FFD27F; border: none; border-radius: 25px; font-size: 1.05rem; font-weight: bold; color: #5C3A00; cursor: pointer; margin-top: 15px; }
@@ -23,21 +23,41 @@
 <div class="card">
   <h2>🐾 新增商品至表單</h2>
   
+  <!-- 1. 商品分類 (新增) -->
+  <div class="form-group">
+    <label>商品分類：</label>
+    <select id="p-category">
+      <option value="dog">🐶 狗狗專區 (dog)</option>
+      <option value="cat">🐱 貓貓專區 (cat)</option>
+      <option value="all">🐾 通用商品 (all)</option>
+    </select>
+  </div>
+
+  <!-- 2. 商品名稱 -->
   <div class="form-group">
     <label>商品名稱：</label>
-    <input type="text" id="p-name" placeholder="例如：天然肉乾零食">
+    <input type="text" id="p-name" placeholder="例如：美味關係小不點饅頭">
   </div>
 
+  <!-- 3. 價格 -->
   <div class="form-group">
     <label>價格 (NT$)：</label>
-    <input type="number" id="p-price" placeholder="例如：150">
+    <input type="number" id="p-price" placeholder="例如：50">
   </div>
 
+  <!-- 4. 口味 / 規格 (新增 - 關鍵修正) -->
+  <div class="form-group">
+    <label>口味 / 規格 (多個請用半形逗號隔開)：</label>
+    <input type="text" id="p-variants" placeholder="例如：牛奶DHA,起司+鈣,草莓,蘋果,綜合">
+  </div>
+
+  <!-- 5. 商品描述 -->
   <div class="form-group">
     <label>商品描述 (選填)：</label>
     <textarea id="p-desc" rows="2" placeholder="簡短說明商品特色..."></textarea>
   </div>
 
+  <!-- 6. 商品照片 -->
   <div class="form-group">
     <label>商品照片：</label>
     <div class="drop-zone" onclick="document.getElementById('file-input').click()">
@@ -53,7 +73,7 @@
 </div>
 
 <script>
-  // ⚠️ 請填入你的 Google Apps Script 部署 Web App 網址 ⚠️
+  // ⚠️ Google Apps Script 部署 Web App 網址
   const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwm4Qpoet1IRD4Y037TAU4UEGP1XpPpDejhdgsc7icFF5k1eBTqBnbwyfyaUn6st2Qk/exec"; 
 
   let compressedBase64 = "";
@@ -109,9 +129,12 @@
   }
 
   async function uploadAndSave() {
+    const category = document.getElementById('p-category').value;
     const name = document.getElementById('p-name').value.trim();
     const price = document.getElementById('p-price').value.trim();
+    const variants = document.getElementById('p-variants').value.trim();
     const desc = document.getElementById('p-desc').value.trim();
+    
     const btn = document.getElementById('sub-btn');
     const msg = document.getElementById('status-msg');
 
@@ -124,10 +147,13 @@
     msg.style.color = '#5C3A00';
     msg.innerText = '正在自動處理並寫入 Google 表單...';
 
+    // 打包包含分類 (category) 與口味 (variants) 的 6 大欄位
     const payload = {
       action: 'addProduct',
+      category: category,
       name: name,
       price: price,
+      variants: variants,
       description: desc,
       imageBase64: compressedBase64,
       imageName: fileName,
@@ -137,6 +163,7 @@
     try {
       const res = await fetch(GAS_WEB_APP_URL, {
         method: 'POST',
+        headers: { 'Content-Type': 'text/plain' }, // 防止 CORS preflight 限制
         body: JSON.stringify(payload)
       });
       const data = await res.json();
@@ -144,9 +171,11 @@
       if (data.status === 'success') {
         msg.style.color = 'green';
         msg.innerText = '🎉 成功！商品資料與圖片已自動寫入 Google 試算表！';
+        
         // 清空欄位
         document.getElementById('p-name').value = '';
         document.getElementById('p-price').value = '';
+        document.getElementById('p-variants').value = '';
         document.getElementById('p-desc').value = '';
         document.getElementById('preview').style.display = 'none';
         compressedBase64 = '';
