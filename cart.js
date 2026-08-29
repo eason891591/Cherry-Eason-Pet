@@ -2,68 +2,141 @@
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxlTRxj5TleEN2-SXV68FRBGoWGMC_3bW3UAwi-X9DqZT1ABpCYFf8M3exy2ZReUJ6z/exec';
 
 let allProducts = []; 
-let cart = JSON.parse(localStorage.getItem('cherryEasonCart')) || [];
+let cart = loadCartFromStorage();
 let isSubmitting = false;
 
-window.onload = () => {
+/* ==========================================
+   📦 本地存儲與初始化 helper
+   ========================================== */
+function loadCartFromStorage() {
+    try {
+        const stored = localStorage.getItem('cherryEasonCart');
+        return stored ? JSON.parse(stored) : [];
+    } catch (e) {
+        console.error("讀取購物車快存失敗:", e);
+        return [];
+    }
+}
+
+function saveAndUpdate() {
+    try {
+        localStorage.setItem('cherryEasonCart', JSON.stringify(cart));
+    } catch (e) {
+        console.error("寫入購物車快存失敗:", e);
+    }
+    updateCart();
+}
+
+// 防範商品名稱引號破壞 onclick 語法
+function escapeQuotes(str) {
+    if (!str) return '';
+    return str.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+}
+
+/* ==========================================
+   🚀 頁面初始化事件
+   ========================================== */
+document.addEventListener("DOMContentLoaded", () => {
+    // 載入商品資料
     const grid = document.getElementById('product-grid');
     if (grid) grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; padding: 40px;">🐾 正在從雲端載入商品...</p>';
 
     fetch(SCRIPT_URL)
         .then(res => res.json())
         .then(data => {
-            allProducts = data;
+            allProducts = Array.isArray(data) ? data : [];
             renderProducts(allProducts);
         })
         .catch(err => {
             console.error("商品載入失敗:", err);
-            if (grid) grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: red; padding: 40px;">❌ 商品載入失敗</p>';
+            if (grid) grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: red; padding: 40px;">❌ 商品載入失敗，請重新整理頁面</p>';
         });
 
     updateCart();
 
+    // 搜尋功能
     document.getElementById('product-search')?.addEventListener('input', (e) => {
         const term = e.target.value.toLowerCase().trim();
-        const filtered = allProducts.filter(p => p.name.toLowerCase().includes(term));
+        const filtered = allProducts.filter(p => (p.name || '').toLowerCase().includes(term));
         renderProducts(filtered);
     });
 
+    // 付款方式切換
     document.getElementById('payment-method')?.addEventListener('change', function() {
         const info = document.getElementById('transfer-info');
         if (info) info.style.display = (this.value === '銀行轉帳') ? 'block' : 'none';
     });
 
+    // 配送方式切換
     document.getElementById('delivery-method')?.addEventListener('change', function() {
         const addrSec = document.getElementById('address-section');
         const storeSec = document.getElementById('store-section');
         if (this.value === '超商取貨') {
-            if(addrSec) addrSec.style.display = 'none';
-            if(storeSec) storeSec.style.display = 'block';
+            if (addrSec) addrSec.style.display = 'none';
+            if (storeSec) storeSec.style.display = 'block';
         } else {
-            if(addrSec) addrSec.style.display = 'block';
-            if(storeSec) storeSec.style.display = 'none';
+            if (addrSec) addrSec.style.display = 'block';
+            if (storeSec) storeSec.style.display = 'none';
         }
     });
-};
 
-/* --- 渲染商品列表 --- */
+    // 下拉選單點擊自動關閉
+    document.querySelectorAll('.dropdown-content a').forEach(link => {
+        link.addEventListener('click', () => {
+            const dropdownContent = link.closest('.dropdown-content');
+            if (dropdownContent) {
+                dropdownContent.style.display = 'none';
+                setTimeout(() => { dropdownContent.style.display = ''; }, 300);
+            }
+        });
+    });
+
+    // 綁定 Header 會員按鈕
+    const authBtn = document.getElementById("auth-btn");
+    if (authBtn) {
+        authBtn.onclick = () => window.handleAuth();
+    }
+
+    // 監聽 Firebase 驗證狀態
+    initFirebaseAuthListener();
+});
+
+// 捲動頂部按鈕
+window.addEventListener('scroll', () => {
+    const topBtn = document.getElementById('back-to-top');
+    if (topBtn) {
+        if (window.scrollY > 300) { topBtn.classList.add('show'); } 
+        else { topBtn.classList.remove('show'); }
+    }
+});
+
+// 鍵盤 Esc 關閉彈窗
+window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        closeProductModal();
+        closeModal();
+    }
+});
+
+/* ==========================================
+   🛍️ 渲染商品列表
+   ========================================== */
 function renderProducts(products) {
     const grid = document.getElementById('product-grid');
     if (!grid) return;
-    if (products.length === 0) {
+    if (!products || products.length === 0) {
         grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; padding: 40px;">🔍 找不到相關商品</p>';
         return;
     }
 
     grid.innerHTML = products.map(p => {
         const variants = p.variants ? p.variants.split(',').map(v => v.trim()) : [];
+        const safeName = escapeQuotes(p.name);
         const variantHtml = variants.length > 0 ? `
             <select id="variant-${p.name.replace(/\s+/g, '-')}" class="variant-select">
                 ${variants.map(v => `<option value="${v}">${v}</option>`).join('')}
             </select>
         ` : '<div style="height: 46px; margin-bottom: 10px;"></div>'; 
-
-        const safeName = p.name.replace(/'/g, "\\'");
 
         return `
             <div class="product">
@@ -81,14 +154,14 @@ function renderProducts(products) {
     }).join('');
 }
 
-/* --- 🔍 商品大圖與詳細描述 Modal 彈窗邏輯 --- */
+/* ==========================================
+   🔍 商品大圖與詳細描述 Modal 彈窗邏輯
+   ========================================== */
 function openProductModal(productName) {
     const product = allProducts.find(p => p.name === productName);
     if (!product) return;
 
     let modal = document.getElementById('product-detail-modal');
-    
-    // 若頁面中不存在 Modal 元素，自動建立
     if (!modal) {
         modal = document.createElement('div');
         modal.id = 'product-detail-modal';
@@ -107,7 +180,7 @@ function openProductModal(productName) {
     ` : '';
 
     const description = product.desc || product.description || product.detail || '精選優質天然食材製作，給寶貝最安心無負擔的健康美味！';
-    const safeName = product.name.replace(/'/g, "\\'");
+    const safeName = escapeQuotes(product.name);
 
     modal.innerHTML = `
         <div class="p-modal-content">
@@ -128,8 +201,8 @@ function openProductModal(productName) {
     `;
 
     modal.classList.add('active');
+    document.body.style.overflow = 'hidden';
 
-    // 點擊背景遮罩關閉彈窗
     modal.onclick = (e) => {
         if (e.target === modal) closeProductModal();
     };
@@ -139,6 +212,7 @@ function closeProductModal() {
     const modal = document.getElementById('product-detail-modal');
     if (modal) {
         modal.classList.remove('active');
+        document.body.style.overflow = '';
     }
 }
 
@@ -159,7 +233,9 @@ function addToCartFromModal(name, price) {
     closeProductModal();
 }
 
-/* --- 購物車操作 --- */
+/* ==========================================
+   🛒 購物車操作邏輯
+   ========================================== */
 function addToCartWithVariant(name, price) {
     const variantEl = document.getElementById(`variant-${name.replace(/\s+/g, '-')}`);
     const selectedVariant = variantEl ? variantEl.value : "";
@@ -233,7 +309,7 @@ function filterProducts(category) {
     else {
         filtered = allProducts.filter(p => {
             const productCat = (p.category || "").toLowerCase(); 
-            const targetCat = category.toLowerCase();            
+            const targetCat = category.toLowerCase();             
             return productCat === targetCat || productCat === 'all';
         });
         titleText = category === 'cat' ? "🐱 貓貓專區" : "🐶 狗狗專區";
@@ -247,6 +323,7 @@ function filterProducts(category) {
 }
 
 function changeQty(index, d) {
+    if (!cart[index]) return;
     cart[index].qty += d;
     if (cart[index].qty <= 0) cart.splice(index, 1);
     saveAndUpdate();
@@ -259,12 +336,9 @@ function clearCart() {
     }
 }
 
-function saveAndUpdate() {
-    localStorage.setItem('cherryEasonCart', JSON.stringify(cart));
-    updateCart();
+function toggleCart() { 
+    document.getElementById("cart-sidebar")?.classList.toggle("open"); 
 }
-
-function toggleCart() { document.getElementById("cart-sidebar").classList.toggle("open"); }
 
 function showToast(msg) {
     let t = document.getElementById("toast");
@@ -278,7 +352,9 @@ function showToast(msg) {
     setTimeout(() => { t.className = ""; }, 3000);
 }
 
-/* --- 結帳與表單提交 --- */
+/* ==========================================
+   💳 結帳與表單提交 logic
+   ========================================== */
 function checkout() {
     if (cart.length === 0) return alert("購物車內沒有商品喔！🐾");
 
@@ -307,16 +383,23 @@ function checkout() {
             
             const saved = localStorage.getItem(`profile_${currentUser.uid}`);
             if (saved) {
-                const profile = JSON.parse(saved);
-                if (document.getElementById("phone")) document.getElementById("phone").value = profile.phone || "";
-                if (document.getElementById("address")) document.getElementById("address").value = profile.address || "";
-                if (document.getElementById("store-info")) document.getElementById("store-info").value = profile.store || "";
+                try {
+                    const profile = JSON.parse(saved);
+                    if (document.getElementById("phone")) document.getElementById("phone").value = profile.phone || "";
+                    if (document.getElementById("address")) document.getElementById("address").value = profile.address || "";
+                    if (document.getElementById("store-info")) document.getElementById("store-info").value = profile.store || "";
+                } catch (e) {
+                    console.error("個人預設資料解析失敗:", e);
+                }
             }
         }, 50);
     }
 }
 
-function closeModal() { document.getElementById("checkout-modal").style.display = "none"; }
+function closeModal() { 
+    const modal = document.getElementById("checkout-modal");
+    if (modal) modal.style.display = "none"; 
+}
 
 async function submitOrder() {
     if (isSubmitting) return;
@@ -324,12 +407,12 @@ async function submitOrder() {
     const orderUser = window.firebaseAuth?.currentUser; 
     const memberUid = orderUser ? orderUser.uid : "訪客";
 
-    const name = document.getElementById("name").value.trim();
-    const phone = document.getElementById("phone").value.trim();
-    const email = document.getElementById("email").value.trim();
-    const delivery = document.getElementById("delivery-method").value;
-    const payment = document.getElementById("payment-method").value;
-    const note = document.getElementById("order-note").value.trim();
+    const name = document.getElementById("name")?.value.trim() || "";
+    const phone = document.getElementById("phone")?.value.trim() || "";
+    const email = document.getElementById("email")?.value.trim() || "";
+    const delivery = document.getElementById("delivery-method")?.value || "";
+    const payment = document.getElementById("payment-method")?.value || "";
+    const note = document.getElementById("order-note")?.value.trim() || "";
     const total_sum = cart.reduce((sum, i) => sum + (i.price * i.qty), 0);
     
     const order_details_text = cart.map(item => {
@@ -337,19 +420,23 @@ async function submitOrder() {
     }).join(", ");
 
     if (!name || !phone) return alert("❌ 請填寫姓名與電話");
-    if (!/^09\d{8}$/.test(phone)) return alert("❌ 手機格式錯誤");
+    if (!/^09\d{8}$/.test(phone)) return alert("❌ 手機格式錯誤 (需為 09 開頭 10 碼數字)");
 
     let finalAddress = "";
     if (delivery === '超商取貨') {
-        finalAddress = "【超商】" + document.getElementById("store-info").value.trim();
+        const storeVal = document.getElementById("store-info")?.value.trim() || "";
+        finalAddress = "【超商】" + storeVal;
     } else {
-        finalAddress = "【宅配】" + document.getElementById("address").value.trim();
+        const addrVal = document.getElementById("address")?.value.trim() || "";
+        finalAddress = "【宅配】" + addrVal;
     }
 
     isSubmitting = true;
     const btn = document.getElementById("submit-btn");
-    btn.innerText = "🚀 訂單傳送中...";
-    btn.disabled = true;
+    if (btn) {
+        btn.innerText = "🚀 訂單傳送中...";
+        btn.disabled = true;
+    }
 
     try {
         let currentOrderId = "無ID_" + new Date().getTime();
@@ -400,8 +487,8 @@ async function submitOrder() {
         if (orderUser) {
             const profile = {
                 phone: phone,
-                address: (delivery !== '超商取貨') ? document.getElementById("address").value : "",
-                store: (delivery === '超商取貨') ? document.getElementById("store-info").value : ""
+                address: (delivery !== '超商取貨') ? (document.getElementById("address")?.value || "") : "",
+                store: (delivery === '超商取貨') ? (document.getElementById("store-info")?.value || "") : ""
             };
             localStorage.setItem(`profile_${orderUser.uid}`, JSON.stringify(profile));
         }
@@ -410,7 +497,7 @@ async function submitOrder() {
         cart = [];
         saveAndUpdate();
         closeModal();
-        document.getElementById('checkout-form').reset();
+        document.getElementById('checkout-form')?.reset();
         window.location.reload(); 
 
     } catch (err) {
@@ -418,30 +505,16 @@ async function submitOrder() {
         alert("❌ 訂單傳送失敗，請稍後再試或聯繫客服。");
     } finally {
         isSubmitting = false;
-        btn.innerText = "🚀 確認送出訂單";
-        btn.disabled = false;
+        if (btn) {
+            btn.innerText = "🚀 確認送出訂單";
+            btn.disabled = false;
+        }
     }
 }
 
-/* --- 選單與捲動事件處理 --- */
-document.querySelectorAll('.dropdown-content a').forEach(link => {
-    link.addEventListener('click', () => {
-        const dropdownContent = link.closest('.dropdown-content');
-        if (dropdownContent) {
-            dropdownContent.style.display = 'none';
-            setTimeout(() => { dropdownContent.style.display = ''; }, 300);
-        }
-    });
-});
-
-window.addEventListener('scroll', () => {
-    const topBtn = document.getElementById('back-to-top');
-    if (topBtn) {
-        if (window.scrollY > 300) { topBtn.classList.add('show'); } 
-        else { topBtn.classList.remove('show'); }
-    }
-});
-
+/* ==========================================
+   📱 導覽列與選單處理
+   ========================================== */
 function toggleMenu() {
     const nav = document.getElementById('mobile-nav');
     const overlay = document.getElementById('nav-overlay');
@@ -457,12 +530,14 @@ function handleNavClick() {
     const overlay = document.getElementById('nav-overlay');
     if (nav && nav.classList.contains('active')) {
         nav.classList.remove('active');
-        overlay.classList.remove('active');
+        if (overlay) overlay.classList.remove('active');
         document.body.style.overflow = '';
     }
 }
 
-/* --- 會員中心邏輯 --- */
+/* ==========================================
+   👤 會員中心邏輯
+   ========================================== */
 function showMemberCenter() {
     const user = window.firebaseAuth?.currentUser;
     if (!user) {
@@ -483,8 +558,10 @@ function showMemberCenter() {
     
     window.scrollTo({ top: 0, behavior: 'smooth' });
 
-    document.getElementById('profile-display-name').innerText = user.displayName || "未設定";
-    document.getElementById('profile-display-email').innerText = user.email || "未設定";
+    const nameEl = document.getElementById('profile-display-name');
+    const emailEl = document.getElementById('profile-display-email');
+    if (nameEl) nameEl.innerText = user.displayName || "未設定";
+    if (emailEl) emailEl.innerText = user.email || "未設定";
 
     fetchUserOrders(user.uid);
 }
@@ -507,6 +584,8 @@ function switchMemberTab(tab) {
     const tabOrders = document.getElementById('tab-orders');
     const tabProfile = document.getElementById('tab-profile');
 
+    if (!orderContent || !profileContent || !tabOrders || !tabProfile) return;
+
     if (tab === 'orders') {
         orderContent.style.display = 'block';
         profileContent.style.display = 'none';
@@ -523,12 +602,18 @@ function switchMemberTab(tab) {
 async function fetchUserOrders(uid) {
     const container = document.getElementById('order-list-container');
     const emptyMsg = document.getElementById('order-list-empty');
+    if (!container || !emptyMsg) return;
     
     container.innerHTML = ""; 
     emptyMsg.style.display = 'block';
     emptyMsg.innerText = "🐾 正在努力讀取您的訂單紀錄...";
 
     try {
+        if (!window.firestoreTools || !window.db) {
+            emptyMsg.innerText = "❌ 資料庫尚未準備就緒，請刷新後重試。";
+            return;
+        }
+
         const { query, collection, where, getDocs } = window.firestoreTools; 
         
         const q = query(
@@ -584,7 +669,7 @@ async function fetchUserOrders(uid) {
    🔐 Firebase 會員登入 / 登出與 UI 監聽
    ========================================== */
 
-// 1. 觸發 Google 登入 / 登出
+// 觸發 Google 登入 / 登出
 window.handleAuth = async function() {
     const auth = window.firebaseAuth || (typeof getAuth === 'function' ? getAuth() : null);
     
@@ -594,12 +679,12 @@ window.handleAuth = async function() {
     }
 
     if (auth.currentUser) {
-        // 已登入狀態點擊：詢問前往會員中心或登出
+        // 已登入狀態：詢問前往會員中心或登出
         if (confirm(`目前登入帳號：${auth.currentUser.displayName || auth.currentUser.email}\n要前往「會員中心」嗎？\n(按「取消」則執行登出)`)) {
             showMemberCenter();
         } else {
             try {
-                if (window.firebaseTools && window.firebaseTools.signOut) {
+                if (window.firebaseTools?.signOut) {
                     await window.firebaseTools.signOut(auth);
                 } else if (auth.signOut) {
                     await auth.signOut();
@@ -612,13 +697,13 @@ window.handleAuth = async function() {
             }
         }
     } else {
-        // 未登入狀態點擊：執行 Google 彈窗登入
+        // 未登入狀態：執行 Google 彈窗登入
         try {
             let provider;
-            if (window.firebaseTools && window.firebaseTools.GoogleAuthProvider) {
+            if (window.firebaseTools?.GoogleAuthProvider) {
                 provider = new window.firebaseTools.GoogleAuthProvider();
                 await window.firebaseTools.signInWithPopup(auth, provider);
-            } else if (window.firebase && window.firebase.auth) {
+            } else if (window.firebase?.auth?.GoogleAuthProvider) {
                 provider = new window.firebase.auth.GoogleAuthProvider();
                 await auth.signInWithPopup(provider);
             } else if (typeof signInWithPopup === 'function') {
@@ -636,7 +721,7 @@ window.handleAuth = async function() {
     }
 };
 
-// 2. 自動更新 Header 登入按鈕狀態
+// 自動更新 Header 登入按鈕狀態
 function updateAuthButtonUI(user) {
     const authBtn = document.getElementById("auth-btn");
     if (!authBtn) return;
@@ -651,15 +736,8 @@ function updateAuthButtonUI(user) {
     }
 }
 
-// 3. 自動綁定事件與監聽 Firebase 登入狀態變更
-document.addEventListener("DOMContentLoaded", () => {
-    // 綁定 Header 上的登入按鈕點擊事件
-    const authBtn = document.getElementById("auth-btn");
-    if (authBtn) {
-        authBtn.onclick = () => window.handleAuth();
-    }
-
-    // 輪詢等待 Firebase 初始化完成後掛載 State 監聽
+// 輪詢等待 Firebase 初始化完成後掛載 State 監聯
+function initFirebaseAuthListener() {
     const checkAuthTimer = setInterval(() => {
         if (window.firebaseAuth) {
             clearInterval(checkAuthTimer);
@@ -669,7 +747,11 @@ document.addEventListener("DOMContentLoaded", () => {
                 onAuth.call(window.firebaseTools ? window.firebaseTools : window.firebaseAuth, window.firebaseAuth, (user) => {
                     updateAuthButtonUI(user);
                 });
+            } else if (typeof window.firebaseAuth.onAuthStateChanged === 'function') {
+                window.firebaseAuth.onAuthStateChanged((user) => {
+                    updateAuthButtonUI(user);
+                });
             }
         }
     }, 200);
-});
+}
