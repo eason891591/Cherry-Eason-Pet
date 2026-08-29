@@ -46,6 +46,7 @@ window.onload = () => {
     });
 };
 
+/* --- 渲染商品列表 --- */
 function renderProducts(products) {
     const grid = document.getElementById('product-grid');
     if (!grid) return;
@@ -60,24 +61,105 @@ function renderProducts(products) {
             <select id="variant-${p.name.replace(/\s+/g, '-')}" class="variant-select">
                 ${variants.map(v => `<option value="${v}">${v}</option>`).join('')}
             </select>
-        ` : '<div style="height: 60px;"></div>'; 
+        ` : '<div style="height: 46px; margin-bottom: 10px;"></div>'; 
+
+        const safeName = p.name.replace(/'/g, "\\'");
 
         return `
             <div class="product">
-                <div class="product-top">
+                <div class="product-top" onclick="openProductModal('${safeName}')" style="cursor: pointer;">
                     <img src="${p.img || ''}" alt="${p.name}">
                     <h3>${p.name}</h3>
                 </div>
                 <div class="product-bottom">
                     ${variantHtml}
                     <p class="product-price">NT$${p.price}</p>
-                    <button onclick="addToCartWithVariant('${p.name}', ${p.price})">加入購物車</button>
+                    <button onclick="addToCartWithVariant('${safeName}', ${p.price})">加入購物車</button>
                 </div>
             </div>
         `;
     }).join('');
 }
 
+/* --- 🔍 商品大圖與詳細描述 Modal 彈窗邏輯 --- */
+function openProductModal(productName) {
+    const product = allProducts.find(p => p.name === productName);
+    if (!product) return;
+
+    let modal = document.getElementById('product-detail-modal');
+    
+    // 若頁面中不存在 Modal 元素，自動建立
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'product-detail-modal';
+        modal.className = 'p-modal-overlay';
+        document.body.appendChild(modal);
+    }
+
+    const variants = product.variants ? product.variants.split(',').map(v => v.trim()) : [];
+    const variantHtml = variants.length > 0 ? `
+        <div style="margin-bottom: 15px;">
+            <label style="font-weight:bold; display:block; margin-bottom:5px; color:#5C3A00;">規格：</label>
+            <select id="modal-variant-select" class="variant-select" style="width: 100%;">
+                ${variants.map(v => `<option value="${v}">${v}</option>`).join('')}
+            </select>
+        </div>
+    ` : '';
+
+    const description = product.desc || product.description || product.detail || '精選優質天然食材製作，給寶貝最安心無負擔的健康美味！';
+    const safeName = product.name.replace(/'/g, "\\'");
+
+    modal.innerHTML = `
+        <div class="p-modal-content">
+            <span class="p-modal-close" onclick="closeProductModal()">&times;</span>
+            <div class="p-modal-body">
+                <div class="p-modal-img-box">
+                    <img src="${product.img || ''}" alt="${product.name}">
+                </div>
+                <div class="p-modal-info-box">
+                    <h2>${product.name}</h2>
+                    <p class="p-modal-price">NT$${product.price}</p>
+                    <p style="color: #666; font-size: 0.95rem; line-height: 1.6; margin: 5px 0 15px 0;">${description}</p>
+                    ${variantHtml}
+                    <button class="p-modal-cart-btn" onclick="addToCartFromModal('${safeName}', ${product.price})">🛒 加入購物車</button>
+                </div>
+            </div>
+        </div>
+    `;
+
+    modal.classList.add('active');
+
+    // 點擊背景遮罩關閉彈窗
+    modal.onclick = (e) => {
+        if (e.target === modal) closeProductModal();
+    };
+}
+
+function closeProductModal() {
+    const modal = document.getElementById('product-detail-modal');
+    if (modal) {
+        modal.classList.remove('active');
+    }
+}
+
+function addToCartFromModal(name, price) {
+    const variantEl = document.getElementById('modal-variant-select');
+    const selectedVariant = variantEl ? variantEl.value : "";
+    const cartId = selectedVariant ? `${name} (${selectedVariant})` : name;
+    
+    let item = cart.find(i => i.cartId === cartId);
+    if (item) {
+        item.qty++;
+    } else {
+        cart.push({ cartId, name, variant: selectedVariant, price, qty: 1 });
+    }
+    
+    saveAndUpdate();
+    showToast(`✅ ${cartId} 已加入！`);
+    closeProductModal();
+}
+
+/* --- 購物車操作 --- */
 function addToCartWithVariant(name, price) {
     const variantEl = document.getElementById(`variant-${name.replace(/\s+/g, '-')}`);
     const selectedVariant = variantEl ? variantEl.value : "";
@@ -135,34 +217,28 @@ function filterProducts(category) {
     backToShop(); 
     
     let filtered;
-    let titleText = "🌟 所有商品"; // 預設標題
+    let titleText = "🌟 所有商品";
 
     if (category === 'all') {
         filtered = allProducts;
         titleText = "🌟 所有商品";
     } 
     else if (category === 'hot') {
-        // 先找尋表格中有標記 hot 欄位為 y, Y 或 1 的商品
         filtered = allProducts.filter(p => p.hot === 'y' || p.hot === 'Y' || p.hot === 1 || p.hot === '1');
-        
-        // 如果你的表格還沒建立 hot 欄位，自動抓前 8 筆商品避免畫面全空
         if (filtered.length === 0) {
             filtered = allProducts.slice(0, 8);
         }
         titleText = "🔥 熱門商品";
     }
     else {
-        // 貓貓(cat) 或 狗狗(dog) 分類邏輯
         filtered = allProducts.filter(p => {
             const productCat = (p.category || "").toLowerCase(); 
             const targetCat = category.toLowerCase();            
-            // 完全等於目標，或是通用(all)的都會顯示
             return productCat === targetCat || productCat === 'all';
         });
         titleText = category === 'cat' ? "🐱 貓貓專區" : "🐶 狗狗專區";
     }
 
-    // 動態更新商品區標題
     const titleEl = document.getElementById('current-category-name');
     if (titleEl) titleEl.innerText = titleText;
 
@@ -202,6 +278,7 @@ function showToast(msg) {
     setTimeout(() => { t.className = ""; }, 3000);
 }
 
+/* --- 結帳與表單提交 --- */
 function checkout() {
     if (cart.length === 0) return alert("購物車內沒有商品喔！🐾");
 
@@ -238,9 +315,9 @@ function checkout() {
         }, 50);
     }
 }
+
 function closeModal() { document.getElementById("checkout-modal").style.display = "none"; }
 
-// 🌟 嚴格按照順序，先存 Firebase 拿 ID，再存 Google Sheets
 async function submitOrder() {
     if (isSubmitting) return;
 
@@ -346,6 +423,7 @@ async function submitOrder() {
     }
 }
 
+/* --- 選單與捲動事件處理 --- */
 document.querySelectorAll('.dropdown-content a').forEach(link => {
     link.addEventListener('click', () => {
         const dropdownContent = link.closest('.dropdown-content');
@@ -384,6 +462,7 @@ function handleNavClick() {
     }
 }
 
+/* --- 會員中心邏輯 --- */
 function showMemberCenter() {
     const user = window.firebaseAuth?.currentUser;
     if (!user) {
