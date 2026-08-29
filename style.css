@@ -410,3 +410,9 @@ body {
 
     .product { width: calc(50% - 15px) !important; min-height: 410px; padding: 12px; }
 }
+/* 鎖定背景頁面滾動 */
+body.no-scroll {
+    overflow: hidden;
+    /* 針對手機 Safari/iOS 的相容性優化 */
+    touch-action: none;
+}
