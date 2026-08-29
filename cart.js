@@ -1,4 +1,4 @@
-// ⚠️ 確保此網址與你 GAS 最新部署的網址一致
+// ⚠️ 確保此網址與你 Google Apps Script (GAS) 最新部署的網址一致
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxlTRxj5TleEN2-SXV68FRBGoWGMC_3bW3UAwi-X9DqZT1ABpCYFf8M3exy2ZReUJ6z/exec';
 
 let allProducts = []; 
@@ -6,7 +6,20 @@ let cart = loadCartFromStorage();
 let isSubmitting = false;
 
 /* ==========================================
-   📦 本地存儲與初始化 helper
+   🔒 背景滾動鎖定/解鎖輔助函式 (相容 Mobile/iOS)
+   ========================================== */
+function lockBodyScroll() {
+    document.body.style.overflow = 'hidden';
+    document.body.style.touchAction = 'none'; // 阻止行動裝置背景觸控滑動
+}
+
+function unlockBodyScroll() {
+    document.body.style.overflow = '';
+    document.body.style.touchAction = '';
+}
+
+/* ==========================================
+   📦 本地存儲與安全輔助函式
    ========================================== */
 function loadCartFromStorage() {
     try {
@@ -27,19 +40,19 @@ function saveAndUpdate() {
     updateCart();
 }
 
-// 防範商品名稱引號破壞 onclick 語法
+// 防範商品名稱引號破壞 HTML onclick 語法
 function escapeQuotes(str) {
     if (!str) return '';
     return str.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;');
 }
 
 /* ==========================================
-   🚀 頁面初始化事件
+   🚀 頁面初始化與事件監聽
    ========================================== */
 document.addEventListener("DOMContentLoaded", () => {
-    // 載入商品資料
+    // 1. 載入商品資料
     const grid = document.getElementById('product-grid');
-    if (grid) grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; padding: 40px;">🐾 正在從雲端載入商品...</p>';
+    if (grid) grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; padding: 40px; color: #5C3A00;">🐾 正在從雲端載入商品...</p>';
 
     fetch(SCRIPT_URL)
         .then(res => res.json())
@@ -54,20 +67,19 @@ document.addEventListener("DOMContentLoaded", () => {
 
     updateCart();
 
-    // 搜尋功能
+    // 2. 搜尋關鍵字過濾
     document.getElementById('product-search')?.addEventListener('input', (e) => {
         const term = e.target.value.toLowerCase().trim();
         const filtered = allProducts.filter(p => (p.name || '').toLowerCase().includes(term));
         renderProducts(filtered);
     });
 
-    // 付款方式切換
+    // 3. 結帳 modal 之付款與配送切換
     document.getElementById('payment-method')?.addEventListener('change', function() {
         const info = document.getElementById('transfer-info');
         if (info) info.style.display = (this.value === '銀行轉帳') ? 'block' : 'none';
     });
 
-    // 配送方式切換
     document.getElementById('delivery-method')?.addEventListener('change', function() {
         const addrSec = document.getElementById('address-section');
         const storeSec = document.getElementById('store-section');
@@ -80,7 +92,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    // 下拉選單點擊自動關閉
+    // 4. 下拉選單點擊自動收起
     document.querySelectorAll('.dropdown-content a').forEach(link => {
         link.addEventListener('click', () => {
             const dropdownContent = link.closest('.dropdown-content');
@@ -88,29 +100,33 @@ document.addEventListener("DOMContentLoaded", () => {
                 dropdownContent.style.display = 'none';
                 setTimeout(() => { dropdownContent.style.display = ''; }, 300);
             }
+            handleNavClick(); // 若在手機版點擊則一併收起側欄
         });
     });
 
-    // 綁定 Header 會員按鈕
+    // 5. 綁定 Header 會員登入/登出按鈕
     const authBtn = document.getElementById("auth-btn");
     if (authBtn) {
         authBtn.onclick = () => window.handleAuth();
     }
 
-    // 監聽 Firebase 驗證狀態
+    // 6. 監聽 Firebase 驗證狀態
     initFirebaseAuthListener();
 });
 
-// 捲動頂部按鈕
+// 捲動顯示 / 隱藏「回到頂部」按鈕
 window.addEventListener('scroll', () => {
     const topBtn = document.getElementById('back-to-top');
     if (topBtn) {
-        if (window.scrollY > 300) { topBtn.classList.add('show'); } 
-        else { topBtn.classList.remove('show'); }
+        if (window.scrollY > 300) { 
+            topBtn.classList.add('show'); 
+        } else { 
+            topBtn.classList.remove('show'); 
+        }
     }
 });
 
-// 鍵盤 Esc 關閉彈窗
+// 按下 Esc 鍵關閉所有彈窗並解除背景鎖定
 window.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
         closeProductModal();
@@ -119,13 +135,14 @@ window.addEventListener('keydown', (e) => {
 });
 
 /* ==========================================
-   🛍️ 渲染商品列表
+   🛍️ 商品列表渲染邏輯
    ========================================== */
 function renderProducts(products) {
     const grid = document.getElementById('product-grid');
     if (!grid) return;
+
     if (!products || products.length === 0) {
-        grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; padding: 40px;">🔍 找不到相關商品</p>';
+        grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; padding: 40px; color: #5C3A00;">🔍 找不到相關商品</p>';
         return;
     }
 
@@ -147,7 +164,7 @@ function renderProducts(products) {
                 <div class="product-bottom">
                     ${variantHtml}
                     <p class="product-price">NT$${p.price}</p>
-                    <button onclick="addToCartWithVariant('${safeName}', ${p.price})">加入購物車</button>
+                    <button type="button" onclick="addToCartWithVariant('${safeName}', ${p.price})">🛒 加入購物車</button>
                 </div>
             </div>
         `;
@@ -155,7 +172,7 @@ function renderProducts(products) {
 }
 
 /* ==========================================
-   🔍 商品大圖與詳細描述 Modal 彈窗邏輯
+   🔍 商品放大顯示 Modal (點擊開啟時鎖定背景)
    ========================================== */
 function openProductModal(productName) {
     const product = allProducts.find(p => p.name === productName);
@@ -172,7 +189,7 @@ function openProductModal(productName) {
     const variants = product.variants ? product.variants.split(',').map(v => v.trim()) : [];
     const variantHtml = variants.length > 0 ? `
         <div style="margin-bottom: 15px;">
-            <label style="font-weight:bold; display:block; margin-bottom:5px; color:#5C3A00;">規格：</label>
+            <label style="font-weight:bold; display:block; margin-bottom:5px; color:#5C3A00;">選擇規格：</label>
             <select id="modal-variant-select" class="variant-select" style="width: 100%;">
                 ${variants.map(v => `<option value="${v}">${v}</option>`).join('')}
             </select>
@@ -201,7 +218,7 @@ function openProductModal(productName) {
     `;
 
     modal.classList.add('active');
-    document.body.style.overflow = 'hidden';
+    lockBodyScroll(); // 🔒 鎖定背景滾動
 
     modal.onclick = (e) => {
         if (e.target === modal) closeProductModal();
@@ -212,7 +229,7 @@ function closeProductModal() {
     const modal = document.getElementById('product-detail-modal');
     if (modal) {
         modal.classList.remove('active');
-        document.body.style.overflow = '';
+        unlockBodyScroll(); // 🔓 解除背景滾動鎖定
     }
 }
 
@@ -229,12 +246,12 @@ function addToCartFromModal(name, price) {
     }
     
     saveAndUpdate();
-    showToast(`✅ ${cartId} 已加入！`);
+    showToast(`✅ ${cartId} 已加入購物車！`);
     closeProductModal();
 }
 
 /* ==========================================
-   🛒 購物車操作邏輯
+   🛒 購物車邏輯處理
    ========================================== */
 function addToCartWithVariant(name, price) {
     const variantEl = document.getElementById(`variant-${name.replace(/\s+/g, '-')}`);
@@ -249,7 +266,7 @@ function addToCartWithVariant(name, price) {
     }
     
     saveAndUpdate();
-    showToast(`✅ ${cartId} 已加入！`);
+    showToast(`✅ ${cartId} 已加入購物車！`);
 }
 
 function updateCart() {
@@ -263,29 +280,30 @@ function updateCart() {
     let itemsHtml = cart.map((item, index) => `
         <div class="cart-item" style="display:flex; justify-content:space-between; margin-bottom:15px; align-items:center; border-bottom:1px solid #eee; padding-bottom:10px;">
             <div style="flex:1;">
-                <b>${item.name}</b><br>
+                <b style="color:#5C3A00;">${item.name}</b><br>
                 ${item.variant ? `<small style="color:#888;">規格: ${item.variant}</small><br>` : ''}
-                <small>NT$${item.price}</small>
+                <small style="color:#FF4500; font-weight:bold;">NT$${item.price}</small>
             </div>
-            <div class="qty-control">
-                <button type="button" onclick="changeQty(${index}, -1)">-</button>
-                <span style="margin:0 10px;">${item.qty}</span>
-                <button type="button" onclick="changeQty(${index}, 1)">+</button>
+            <div class="qty-control" style="display:flex; align-items:center;">
+                <button type="button" onclick="changeQty(${index}, -1)" style="width:28px; height:28px; border:1px solid #ddd; background:#fff; border-radius:4px; cursor:pointer;">-</button>
+                <span style="margin:0 10px; font-weight:bold;">${item.qty}</span>
+                <button type="button" onclick="changeQty(${index}, 1)" style="width:28px; height:28px; border:1px solid #ddd; background:#fff; border-radius:4px; cursor:pointer;">+</button>
             </div>
         </div>`).join('');
 
     sidebar.innerHTML = `
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-            <h3 style="margin:0;">🛒 購物清單</h3>
-            <span onclick="toggleCart()" style="cursor:pointer; font-size:32px;">&times;</span>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; padding-bottom:10px; border-bottom:2px solid #FFD27F;">
+            <h3 style="margin:0; color:#5C3A00;">🛒 購物清單</h3>
+            <span onclick="toggleCart()" style="cursor:pointer; font-size:28px; color:#888;">&times;</span>
         </div>
-        <div id="cart-items" style="max-height: 60vh; overflow-y: auto;">${itemsHtml || '<p style="text-align:center; color:gray; padding:20px;">車內空空的🐾</p>'}</div>
-        <div class="cart-footer" style="margin-top:20px; border-top:2px solid #5C3A00; padding-top:15px;">
-            <h4 style="text-align:right; margin-bottom:15px;">總金額 NT$${sum}</h4>
-            <button type="button" onclick="clearCart()" style="width:100%; padding:8px; background:none; color:#888; border:1px solid #ddd; border-radius:8px; margin-bottom:10px; cursor:pointer;">清空購物車</button>
-            <button type="button" onclick="checkout()" style="width:100%; padding:14px; background:#5C3A00; color:white; border:none; border-radius:10px; font-weight:bold; cursor:pointer;">確認結帳</button>
+        <div id="cart-items" style="max-height: 60vh; overflow-y: auto;">${itemsHtml || '<p style="text-align:center; color:gray; padding:30px 0;">車內空空的🐾</p>'}</div>
+        <div class="cart-footer" style="margin-top:20px; border-top:2px solid #FFD27F; padding-top:15px;">
+            <h4 style="text-align:right; margin-bottom:15px; color:#5C3A00;">總金額 <span style="color:#FF4500; font-size:1.3rem;">NT$${sum}</span></h4>
+            <button type="button" onclick="clearCart()" style="width:100%; padding:10px; background:none; color:#888; border:1px solid #ddd; border-radius:8px; margin-bottom:10px; cursor:pointer;">清空購物車</button>
+            <button type="button" onclick="checkout()" style="width:100%; padding:14px; background:#5C3A00; color:white; border:none; border-radius:10px; font-weight:bold; cursor:pointer; font-size:1rem;">確認結帳</button>
         </div>
     `;
+
     if (countEl) countEl.innerText = qtyTotal;
 }
 
@@ -301,9 +319,7 @@ function filterProducts(category) {
     } 
     else if (category === 'hot') {
         filtered = allProducts.filter(p => p.hot === 'y' || p.hot === 'Y' || p.hot === 1 || p.hot === '1');
-        if (filtered.length === 0) {
-            filtered = allProducts.slice(0, 8);
-        }
+        if (filtered.length === 0) filtered = allProducts.slice(0, 8);
         titleText = "🔥 熱門商品";
     }
     else {
@@ -330,7 +346,7 @@ function changeQty(index, d) {
 }
 
 function clearCart() {
-    if (cart.length > 0 && confirm("確定要清空嗎？🐾")) {
+    if (cart.length > 0 && confirm("確定要清空購物車嗎？🐾")) {
         cart = [];
         saveAndUpdate();
     }
@@ -353,7 +369,7 @@ function showToast(msg) {
 }
 
 /* ==========================================
-   💳 結帳與表單提交 logic
+   💳 結帳 Modal 與表單發送 (同步開啟/關閉鎖定)
    ========================================== */
 function checkout() {
     if (cart.length === 0) return alert("購物車內沒有商品喔！🐾");
@@ -375,6 +391,8 @@ function checkout() {
     const modal = document.getElementById("checkout-modal");
     if (modal) {
         modal.style.display = "flex";
+        lockBodyScroll(); // 🔒 鎖定背景滾動
+
         setTimeout(() => {
             const nameInput = document.getElementById("name");
             const emailInput = document.getElementById("email");
@@ -398,7 +416,10 @@ function checkout() {
 
 function closeModal() { 
     const modal = document.getElementById("checkout-modal");
-    if (modal) modal.style.display = "none"; 
+    if (modal) {
+        modal.style.display = "none"; 
+        unlockBodyScroll(); // 🔓 解除背景滾動鎖定
+    }
 }
 
 async function submitOrder() {
@@ -441,7 +462,7 @@ async function submitOrder() {
     try {
         let currentOrderId = "無ID_" + new Date().getTime();
 
-        // 1. 先存入 Firebase 取得真正的 ID
+        // 1. 先寫入 Firebase Firestore
         if (orderUser && window.db && window.firestoreTools) {
             const docRef = await window.firestoreTools.addDoc(window.firestoreTools.collection(window.db, "orders"), {
                 userId: orderUser.uid,
@@ -461,7 +482,7 @@ async function submitOrder() {
             console.log("Firestore 建立成功，ID:", currentOrderId);
         }
 
-        // 2. 將包含 Firebase ID 的資料傳給 Google Sheets
+        // 2. 同步傳送給 Google Apps Script
         const params = new URLSearchParams();
         params.append("orderId", currentOrderId);
         params.append("name", name);
@@ -483,7 +504,7 @@ async function submitOrder() {
             mode: 'no-cors' 
         });
 
-        // 3. 儲存用戶資料供下次快速填寫
+        // 3. 儲存電話與地址供未來快速帶入
         if (orderUser) {
             const profile = {
                 phone: phone,
@@ -501,7 +522,7 @@ async function submitOrder() {
         window.location.reload(); 
 
     } catch (err) {
-        console.error("訂單傳送發生錯誤:", err);
+        console.error("訂單傳送失敗:", err);
         alert("❌ 訂單傳送失敗，請稍後再試或聯繫客服。");
     } finally {
         isSubmitting = false;
@@ -513,30 +534,35 @@ async function submitOrder() {
 }
 
 /* ==========================================
-   📱 導覽列與選單處理
+   📱 手機版導覽側欄 (同步背景鎖定)
    ========================================== */
 function toggleMenu() {
-    const nav = document.getElementById('mobile-nav');
+    const nav = document.getElementById('mobile-nav') || document.querySelector('.nav');
     const overlay = document.getElementById('nav-overlay');
-    if (nav && overlay) {
-        nav.classList.toggle('active');
-        overlay.classList.toggle('active');
-        document.body.style.overflow = nav.classList.contains('active') ? 'hidden' : '';
+    if (nav) {
+        const isActive = nav.classList.toggle('active');
+        if (overlay) overlay.classList.toggle('active', isActive);
+        
+        if (isActive) {
+            lockBodyScroll();
+        } else {
+            unlockBodyScroll();
+        }
     }
 }
 
 function handleNavClick() {
-    const nav = document.getElementById('mobile-nav');
+    const nav = document.getElementById('mobile-nav') || document.querySelector('.nav');
     const overlay = document.getElementById('nav-overlay');
     if (nav && nav.classList.contains('active')) {
         nav.classList.remove('active');
         if (overlay) overlay.classList.remove('active');
-        document.body.style.overflow = '';
+        unlockBodyScroll();
     }
 }
 
 /* ==========================================
-   👤 會員中心邏輯
+   👤 會員中心與訂單紀錄
    ========================================== */
 function showMemberCenter() {
     const user = window.firebaseAuth?.currentUser;
@@ -666,10 +692,8 @@ async function fetchUserOrders(uid) {
 }
 
 /* ==========================================
-   🔐 Firebase 會員登入 / 登出與 UI 監聽
+   🔐 Firebase 會員驗證
    ========================================== */
-
-// 觸發 Google 登入 / 登出
 window.handleAuth = async function() {
     const auth = window.firebaseAuth || (typeof getAuth === 'function' ? getAuth() : null);
     
@@ -679,7 +703,6 @@ window.handleAuth = async function() {
     }
 
     if (auth.currentUser) {
-        // 已登入狀態：詢問前往會員中心或登出
         if (confirm(`目前登入帳號：${auth.currentUser.displayName || auth.currentUser.email}\n要前往「會員中心」嗎？\n(按「取消」則執行登出)`)) {
             showMemberCenter();
         } else {
@@ -697,7 +720,6 @@ window.handleAuth = async function() {
             }
         }
     } else {
-        // 未登入狀態：執行 Google 彈窗登入
         try {
             let provider;
             if (window.firebaseTools?.GoogleAuthProvider) {
@@ -721,7 +743,6 @@ window.handleAuth = async function() {
     }
 };
 
-// 自動更新 Header 登入按鈕狀態
 function updateAuthButtonUI(user) {
     const authBtn = document.getElementById("auth-btn");
     if (!authBtn) return;
@@ -729,14 +750,11 @@ function updateAuthButtonUI(user) {
     if (user) {
         const name = user.displayName ? user.displayName.split(" ")[0] : "會員";
         authBtn.innerText = `👤 ${name}`;
-        authBtn.style.background = "#5C3A00";
     } else {
         authBtn.innerText = "🔑 會員登入";
-        authBtn.style.background = "#5C3A00";
     }
 }
 
-// 輪詢等待 Firebase 初始化完成後掛載 State 監聯
 function initFirebaseAuthListener() {
     const checkAuthTimer = setInterval(() => {
         if (window.firebaseAuth) {
