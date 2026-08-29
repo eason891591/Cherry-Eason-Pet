@@ -1,5 +1,5 @@
 // ⚠️ 確保此網址與你 GAS 最新部署的網址一致
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbya0xz2GwNnXZz_xAP4BD-6TpScHazcjXRvnxPufqV-N7qQthCCj3sg6M4P1NMXwt6U/exec';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwJBeSfBKJn6wDCsl6bnBxb61iKuR67T-EDf49AaaUaQ6xk1lihbSn6i8tvd4_Twt_r/exec';
 
 let allProducts = []; 
 let cart = JSON.parse(localStorage.getItem('cherryEasonCart')) || [];
